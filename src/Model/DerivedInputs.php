@@ -13,13 +13,16 @@ final class DerivedInputs
     public function __construct(
         public readonly string $country,
         
+        // Original counts
+        public readonly int $sites,
+        public readonly int $patients,
+        
         // Time periods
         public readonly float $startupMonths,
         public readonly int $activePhaseMonths,
         public readonly int $totalMonths,
         
         // Site selection counts
-        public readonly int $sites,
         public readonly int $sitesContacted,
         public readonly int $sitesCdas,
         public readonly int $sitesQuestionnaires,

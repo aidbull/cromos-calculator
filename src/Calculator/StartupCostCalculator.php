@@ -63,7 +63,7 @@ final class StartupCostCalculator
         // Collecting site regulatory documents (8 hrs * rate * sites)
         $costs->addStartupService(
             'site_regulatory_docs',
-            8 * $craRate * ($derived->sitesContacted > 0 ? $derived->sites : 0)
+            8 * $craRate * $derived->sites
         );
     }
 
@@ -91,9 +91,8 @@ final class StartupCostCalculator
     private function calcContractCosts(DerivedInputs $derived, CostBreakdown $costs): void
     {
         $c = $derived->country;
-        $sites = $derived->sites;
 
-        if ($sites === 0) {
+        if ($derived->sites === 0) {
             return;
         }
 
@@ -106,25 +105,24 @@ final class StartupCostCalculator
         // Site-specific contracts & budgets negotiation (per site)
         $costs->addStartupService(
             'contract_negotiation',
-            $this->config->contractNegotiationCost($c) * $sites
+            $this->config->contractNegotiationCost($c) * $derived->sites
         );
     }
 
     private function calcRegulatoryCosts(ProjectInput $project, DerivedInputs $derived, CostBreakdown $costs): void
     {
         $c = $derived->country;
-        $sites = $derived->sites;
 
         // Country-specific dossier
         $costs->addStartupService(
             'country_dossier',
-            $this->config->regulatoryHours('country_dossier') * $this->config->hourlyRate('ra', $c)
+            $this->config->regulatoryHours('country_dossier') * $this->config->hourlyRate('ra', $c) * $derived->ecIrbCount
         );
 
         // Initial EC/IRB submissions (per site)
         $costs->addStartupService(
             'initial_ec_submissions',
-            $this->config->regulatoryHours('initial_ec_submission') * $this->config->hourlyRate('ra', $c) * $sites
+            $this->config->regulatoryHours('initial_ec_submission') * $this->config->hourlyRate('ra', $c) * $derived->sites
         );
 
         // EU-specific: Legal representation setup
@@ -140,7 +138,7 @@ final class StartupCostCalculator
         // Investigator start-up meeting (4 hrs * investigator_meeting_rate * CRAs)
         $costs->addStartupService(
             'investigator_meeting',
-            4 * $this->config->hourlyRate('investigator_meeting', $c) * $derived->crasRequired
+            4 * $this->config->hourlyRate('investigator_meeting', $c) * $derived->crasRequired * $derived->ecIrbCount
         );
     }
 
@@ -156,13 +154,13 @@ final class StartupCostCalculator
         // Project team setup (2 hrs * PM rate * CRAs)
         $costs->addStartupService(
             'team_setup',
-            2 * $pmRate * $derived->crasRequired
+            2 * $pmRate * $derived->crasRequired * $derived->ecIrbCount
         );
 
         // Project team training (22 hrs * CRA rate * CRAs)
         $costs->addStartupService(
             'team_training',
-            22 * $craRate * $derived->crasRequired
+            22 * $craRate * $derived->crasRequired * $derived->ecIrbCount
         );
     }
 
@@ -172,7 +170,6 @@ final class StartupCostCalculator
         $craRate = $this->config->hourlyRate('cra', $c);
         $pmRate = $this->config->hourlyRate('pm', $c);
         $adminRate = $this->config->hourlyRate('admin', $c);
-        $sites = $derived->sites;
 
         // TMF Maintenance (startup months)
         $costs->addStartupService(
@@ -195,16 +192,16 @@ final class StartupCostCalculator
         // Project team management (2 hrs * PM rate * countries)
         $costs->addStartupService(
             'team_management',
-            2 * $pmRate * $derived->ecIrbCount
+            2 * $pmRate * $derived->ecIrbCount * $derived->startupMonths
         );
 
         // Review of visit reports (PM rate * total qualification visits)
         $costs->addStartupService(
             'visit_report_review',
-            $pmRate * $derived->getTotalQualificationVisits()
+            $pmRate * ($derived->getTotalQualificationVisits() + $derived->getTotalInitiationVisits())
         );
 
-        // Resolution of country-level issues (4 hrs * PM rate * startup months)
+        // Resolution of country-level issues (4 hrs * PM rate * countries * startup months)
         $costs->addStartupService(
             'country_issues_resolution',
             4 * $pmRate * $derived->ecIrbCount * $derived->startupMonths
@@ -213,7 +210,7 @@ final class StartupCostCalculator
         // Sites setup (14 hrs * CRA rate * sites)
         $costs->addStartupService(
             'sites_setup',
-            14 * $craRate * $sites
+            14 * $craRate * $derived->sites
         );
 
         // Site initiation visits
@@ -245,7 +242,6 @@ final class StartupCostCalculator
     private function calcPassthroughCosts(DerivedInputs $derived, CostBreakdown $costs): void
     {
         $c = $derived->country;
-        $sites = $derived->sites;
 
         // Travel - qualification visits
         if ($derived->qualificationVisitsOnsite > 0) {
@@ -278,27 +274,27 @@ final class StartupCostCalculator
         // Communication expenses (per site)
         $costs->addStartupPassthrough(
             'communication',
-            $this->config->fixedCost('communication_expense', $c) * $sites
+            $this->config->fixedCost('communication_expense', $c) * $derived->sites
         );
 
         // Central IRB fee (US only)
         if ($this->config->isUs($c)) {
             $costs->addStartupPassthrough(
                 'central_irb',
-                $this->config->global('central_irb_fee') * $sites * $derived->startupMonths
+                $this->config->global('central_irb_fee') * $derived->sites * $derived->startupMonths
             );
         }
 
         // Site startup fee
         $costs->addStartupPassthrough(
             'site_startup_fee',
-            $this->config->fixedCost('site_startup_fee', $c) * $sites
+            $this->config->fixedCost('site_startup_fee', $c) * $derived->sites
         );
 
         // Site contract negotiation fee
         $costs->addStartupPassthrough(
             'site_contract_fee',
-            $this->config->fixedCost('site_contract_fee', $c) * $sites
+            $this->config->fixedCost('site_contract_fee', $c) * $derived->sites
         );
 
         // Monitor visit fees

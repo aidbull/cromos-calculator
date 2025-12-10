@@ -268,7 +268,6 @@ final class ActivePhaseCostCalculator
     private function calcPassthroughCosts(DerivedInputs $derived, CostBreakdown $costs): void
     {
         $c = $derived->country;
-        $sites = $derived->sites;
         $annualCycles = $derived->annualSubmissionCycles;
 
         // Travel - monitoring visits
@@ -315,31 +314,31 @@ final class ActivePhaseCostCalculator
             // Site regulatory annual fee
             $costs->addActivePassthrough(
                 'site_regulatory_annual',
-                $this->config->fixedCost('site_regulatory_annual', $c) * $annualCycles * $sites
+                $this->config->fixedCost('site_regulatory_annual', $c) * $annualCycles * $derived->sites
             );
 
             // Pharmacy annual fee
             $costs->addActivePassthrough(
                 'pharmacy_annual',
-                $this->config->fixedCost('pharmacy_annual', $c) * $annualCycles * $sites
+                $this->config->fixedCost('pharmacy_annual', $c) * $annualCycles * $derived->sites
             );
 
             // Site close-out fee
             $costs->addActivePassthrough(
                 'site_closeout_fee',
-                $this->config->fixedCost('site_closeout_fee', $c) * $sites
+                $this->config->fixedCost('site_closeout_fee', $c) * $derived->sites
             );
 
             // Pharmacy close-out fee
             $costs->addActivePassthrough(
                 'pharmacy_closeout_fee',
-                $this->config->fixedCost('pharmacy_closeout_fee', $c) * $sites
+                $this->config->fixedCost('pharmacy_closeout_fee', $c) * $derived->sites
             );
 
             // Central IRB fee (active phase)
             $costs->addActivePassthrough(
                 'central_irb',
-                $this->config->global('central_irb_fee') * $derived->activePhaseMonths * $sites
+                $this->config->global('central_irb_fee') * $derived->activePhaseMonths * $derived->sites
             );
         }
     }

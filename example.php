@@ -38,61 +38,65 @@ $project = new ProjectInput(
 );
 
 // Add US data (from Excel column E)
-$project->addCountry(new CountryInput(
-    country: 'EU_CEE',
-    sites: 5,
-    patients: 15,
-    monitoringVisitsOnsite: 4,
-    monitoringVisitsRemote: 12,
-    unblindedVisits: 2,
-));
-$project->addCountry(new CountryInput(
-    country: 'EU_CEE',
-    sites: 5,
-    patients: 15,
-    monitoringVisitsOnsite: 4,
-    monitoringVisitsRemote: 12,
-    unblindedVisits: 2,
-));
+//$project->addCountry(new CountryInput(
+//    country: 'US',
+//    sites: 5,
+//    patients: 15,
+//    monitoringVisitsOnsite: 4,
+//    monitoringVisitsRemote: 12,
+//    unblindedVisits: 2,
+//    // US: always 1 country (default)
+//));
 
 $project->addCountry(new CountryInput(
-    country: 'EU_CEE',
+    country: 'Non_EU',
     sites: 5,
-    patients: 15,
-    monitoringVisitsOnsite: 4,
-    monitoringVisitsRemote: 12,
-    unblindedVisits: 2,
+    patients:15,
+    monitoringVisitsOnsite: 10,
+    monitoringVisitsRemote: 0,
+    unblindedVisits: 5,
+    countriesInRegion:1
 ));
 
+// Example: Non-EU region where each site = separate country/EC
+// $project->addCountry(new CountryInput(
+//     country: 'Non_EU',
+//     sites: 4,
+//     patients: 20,
+//     monitoringVisitsOnsite: 4,
+//     monitoringVisitsRemote: 12,
+//     unblindedVisits: 0,
+//     // countriesInRegion defaults to sites count for Non_EU
+// ));
 
 // Calculate
 $results = $calculator->calculateAsArray($project);
 
 // Output
-echo "=== BALLPARK COST ESTIMATE ===\n\n";
-
-echo "GLOBAL COSTS:\n";
-echo sprintf("  Startup Service:     $%s\n", number_format($results['global']['startup']['service_total']));
-echo sprintf("  Startup Passthrough: $%s\n", number_format($results['global']['startup']['passthrough_total']));
-echo sprintf("  Active Service:      $%s\n", number_format($results['global']['active']['service_total']));
-echo sprintf("  Active Passthrough:  $%s\n", number_format($results['global']['active']['passthrough_total']));
-echo "\n";
-
-foreach ($results['countries'] as $country => $breakdown) {
-    echo "{$country}:\n";
-    echo sprintf("  Startup Service:     $%s\n", number_format($breakdown['startup']['service_total']));
-    echo sprintf("  Startup Passthrough: $%s\n", number_format($breakdown['startup']['passthrough_total']));
-    echo sprintf("  Active Service:      $%s\n", number_format($breakdown['active']['service_total']));
-    echo sprintf("  Active Passthrough:  $%s\n", number_format($breakdown['active']['passthrough_total']));
-    echo sprintf("  Country Total:       $%s\n", number_format($breakdown['totals']['grand_total']));
-    echo "\n";
-}
-
-echo "=== TOTALS ===\n";
-echo sprintf("  Startup:     $%s\n", number_format($results['totals']['startup']));
-echo sprintf("  Active:      $%s\n", number_format($results['totals']['active']));
-echo sprintf("  GRAND TOTAL: $%s\n", number_format($results['totals']['grand_total']));
-
-// JSON output for API use
-echo "\n=== JSON OUTPUT ===\n";
+//echo "=== BALLPARK COST ESTIMATE ===\n\n";
+//
+//echo "GLOBAL COSTS:\n";
+//echo sprintf("  Startup Service:     $%s\n", number_format($results['global']['startup']['service_total']));
+//echo sprintf("  Startup Passthrough: $%s\n", number_format($results['global']['startup']['passthrough_total']));
+//echo sprintf("  Active Service:      $%s\n", number_format($results['global']['active']['service_total']));
+//echo sprintf("  Active Passthrough:  $%s\n", number_format($results['global']['active']['passthrough_total']));
+//echo "\n";
+//
+//foreach ($results['countries'] as $country => $breakdown) {
+//    echo "{$country}:\n";
+//    echo sprintf("  Startup Service:     $%s\n", number_format($breakdown['startup']['service_total']));
+//    echo sprintf("  Startup Passthrough: $%s\n", number_format($breakdown['startup']['passthrough_total']));
+//    echo sprintf("  Active Service:      $%s\n", number_format($breakdown['active']['service_total']));
+//    echo sprintf("  Active Passthrough:  $%s\n", number_format($breakdown['active']['passthrough_total']));
+//    echo sprintf("  Country Total:       $%s\n", number_format($breakdown['totals']['grand_total']));
+//    echo "\n";
+//}
+//
+//echo "=== TOTALS ===\n";
+//echo sprintf("  Startup:     $%s\n", number_format($results['totals']['startup']));
+//echo sprintf("  Active:      $%s\n", number_format($results['totals']['active']));
+//echo sprintf("  GRAND TOTAL: $%s\n", number_format($results['totals']['grand_total']));
+//
+//// JSON output for API use
+//echo "\n=== JSON OUTPUT ===\n";
 echo json_encode($results, JSON_PRETTY_PRINT);

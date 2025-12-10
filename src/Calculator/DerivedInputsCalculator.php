@@ -28,13 +28,16 @@ final class DerivedInputsCalculator
         return new DerivedInputs(
             country: $country->country,
             
+            // Original counts
+            sites: $country->sites,
+            patients: $country->patients,
+            
             // Time periods
             startupMonths: $startupMonths,
             activePhaseMonths: $activePhaseMonths,
             totalMonths: (int) ceil($startupMonths) + $activePhaseMonths,
             
             // Site selection (multipliers from config)
-            sites: $country->sites,
             sitesContacted: (int) round($this->config->global('site_multiplier_contacted') * $country->sites),
             sitesCdas: (int) round($this->config->global('site_multiplier_cdas') * $country->sites),
             sitesQuestionnaires: (int) round($this->config->global('site_multiplier_questionnaires') * $country->sites),
@@ -59,7 +62,7 @@ final class DerivedInputsCalculator
             periodicSafetyNotifications: (int) round($activePhaseMonths / 12),
             
             // Regulatory
-            ecIrbCount: $this->calcEcIrbCount($country),
+            ecIrbCount: $country->getEcIrbCount(),
             annualSubmissionCycles: (int) round($activePhaseMonths / 12),
             
             // Team
@@ -122,12 +125,6 @@ final class DerivedInputsCalculator
         return (int) round($weeksInPhase / $project->susarsWeeks);
     }
 
-    private function calcEcIrbCount(CountryInput $country): int
-    {
-        // US: 1 per site if active, EU/other: 1 per country if active
-        return $country->isActive() ? 1 : 0;
-    }
-
     private function calcCrasRequired(ProjectInput $project, CountryInput $country): int
     {
         if (!$country->isActive()) {
@@ -143,6 +140,8 @@ final class DerivedInputsCalculator
     {
         return new DerivedInputs(
             country: $country,
+            sites: 0,
+            patients: 0,
             startupMonths: 0,
             activePhaseMonths: 0,
             totalMonths: 0,

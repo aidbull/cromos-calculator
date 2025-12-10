@@ -144,8 +144,8 @@ final class BallparkCalculator
 
         // Vendors & team setup
         $costs->addStartupService('vendors_setup', 3 * $this->config->global('vendors_setup'));
-        $costs->addStartupService('team_setup', $this->config->global('team_setup'));
-        $costs->addStartupService('team_training', 20 * 202 * $pmCount);
+        $costs->addStartupService('team_setup', $this->config->global('team_setup') );
+        $costs->addStartupService('team_training', 20 * 202 * $pmCount * $derived->ecIrbCount);
 
         // Global TMF & tracking (startup)
         $costs->addStartupService('tmf_maintenance', $this->config->global('tmf_maintenance_global') * $maxStartupMonths);
