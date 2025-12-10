@@ -1,0 +1,39 @@
+<?php
+
+declare(strict_types=1);
+
+namespace BallparkCalculator\Model;
+
+final class CountryInput
+{
+    public function __construct(
+        public readonly string $country,
+        public readonly int $sites = 0,
+        public readonly int $patients = 0,
+        public readonly int $monitoringVisitsOnsite = 0,
+        public readonly int $monitoringVisitsRemote = 0,
+        public readonly int $unblindedVisits = 0,
+    ) {}
+
+    public function isActive(): bool
+    {
+        return $this->sites > 0;
+    }
+
+    public function hasUnblindedVisits(): bool
+    {
+        return $this->unblindedVisits > 0;
+    }
+
+    public static function fromArray(string $country, array $data): self
+    {
+        return new self(
+            country: $country,
+            sites: (int) ($data['sites'] ?? 0),
+            patients: (int) ($data['patients'] ?? 0),
+            monitoringVisitsOnsite: (int) ($data['monitoring_onsite'] ?? 0),
+            monitoringVisitsRemote: (int) ($data['monitoring_remote'] ?? 0),
+            unblindedVisits: (int) ($data['unblinded_visits'] ?? 0),
+        );
+    }
+}
