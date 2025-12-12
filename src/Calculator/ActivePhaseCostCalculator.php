@@ -13,13 +13,16 @@ final class ActivePhaseCostCalculator
 {
     public function __construct(
         private readonly CountryRates $config,
-    ) {}
+    )
+    {
+    }
 
     public function calculate(
-        ProjectInput $project,
+        ProjectInput  $project,
         DerivedInputs $derived,
         CostBreakdown $costs,
-    ): void {
+    ): void
+    {
         if ($derived->activePhaseMonths === 0) {
             return;
         }
@@ -52,22 +55,37 @@ final class ActivePhaseCostCalculator
         $minorRaHours = $this->config->regulatoryHours('minor_ra_submission');
         $costs->addActiveService(
             'minor_ra_submissions',
-            $minorRaHours * $raRate * (1 + $annualCycles)
+            $minorRaHours * $raRate * (3 + $annualCycles)
         );
 
         // Major EC/IRB submissions (per annual cycle)
         $majorEcHours = $this->config->regulatoryHours('major_ec_submission');
-        $costs->addActiveService(
-            'major_ec_submissions',
-            $majorEcHours * $raRate * $annualCycles * $derived->ecIrbCount
-        );
 
-        // Minor EC/IRB submissions
-        $minorEcHours = $this->config->regulatoryHours('minor_ec_submission');
-        $costs->addActiveService(
-            'minor_ec_submissions',
-            $minorEcHours * $raRate * (5 + $annualCycles * 5) // Base 5 + 5 per year
-        );
+        if ($this->config->isEuCountry($c)) {
+            $costs->addActiveService(
+                'major_ec_submissions',
+                $majorEcHours * $raRate * $annualCycles * $derived->countires
+            );
+
+            // Minor EC/IRB submissions
+            $minorEcHours = $this->config->regulatoryHours('minor_ec_submission');
+            $costs->addActiveService(
+                'minor_ec_submissions',
+                $minorEcHours * $raRate * (5 + $annualCycles) // Base 5 + 5 per year
+            );
+        } else {
+            $costs->addActiveService(
+                'major_ec_submissions',
+                $majorEcHours * $raRate * $annualCycles * $derived->countires * $derived->sites
+            );
+
+            // Minor EC/IRB submissions
+            $minorEcHours = $this->config->regulatoryHours('minor_ec_submission');
+            $costs->addActiveService(
+                'minor_ec_submissions',
+                $minorEcHours * $raRate * (3 + $annualCycles * $derived->sites)
+            );
+        }
 
         // EU Legal representative services (annual)
         if ($this->config->isEuCountry($c)) {
@@ -86,7 +104,7 @@ final class ActivePhaseCostCalculator
 
         // Regular client calls (already in global, country gets proportional share)
         // Formula: (0.5+1+0.5) * (PM + QA) * weeks
-        $weeksInPhase = (int) round($derived->activePhaseMonths * 30.4 / 7);
+        $weeksInPhase = (int)round($derived->activePhaseMonths * 30.4 / 7);
         // Handled at project level
     }
 
@@ -110,6 +128,7 @@ final class ActivePhaseCostCalculator
     private function calcClinicalOpsCosts(ProjectInput $project, DerivedInputs $derived, CostBreakdown $costs): void
     {
         $c = $derived->country;
+        // $discount = $this->config->isEuCountry($c) ? 1 : 0.83;
         $craRate = $this->config->hourlyRate('cra', $c);
         $pmRate = $this->config->hourlyRate('pm', $c);
         $adminRate = $this->config->hourlyRate('admin', $c);
@@ -136,14 +155,14 @@ final class ActivePhaseCostCalculator
         // Project team management (monthly per country)
         $costs->addActiveService(
             'team_management',
-            2 * $pmRate * $derived->ecIrbCount * $months
+            2 * $pmRate * $derived->countires * $months
         );
 
         // Review of visit reports
-        $totalVisits = $derived->monitoringVisitsOnsite 
-            + $derived->monitoringVisitsRemote 
-            + $derived->unblindedVisits 
-            + $derived->closeoutVisitsOnsite 
+        $totalVisits = $derived->monitoringVisitsOnsite
+            + $derived->monitoringVisitsRemote
+            + $derived->unblindedVisits
+            + $derived->closeoutVisitsOnsite
             + $derived->closeoutVisitsRemote;
         $costs->addActiveService(
             'visit_report_review',
@@ -153,7 +172,7 @@ final class ActivePhaseCostCalculator
         // Resolution of country-level issues (monthly)
         $costs->addActiveService(
             'country_issues_resolution',
-            4 * $pmRate * $derived->ecIrbCount * $months
+            4 * $pmRate * $derived->countires * $months
         );
 
         // Pass-through costs management (monthly)
@@ -222,7 +241,7 @@ final class ActivePhaseCostCalculator
         // Administration of site payments (5 hrs * CRA rate * site-months)
         $costs->addActiveService(
             'site_payment_admin',
-            5 * $craRate * $derived->siteMonthsActive
+            5 * $craRate * $derived->sitePayments
         );
     }
 
@@ -238,17 +257,19 @@ final class ActivePhaseCostCalculator
             4 * $craRate * $derived->saes
         );
 
-        // Expedited safety notifications to EC/IRB
-        $costs->addActiveService(
-            'expedited_safety_ec',
-            $craRate * $derived->expeditedSafetySubmissions * $derived->ecIrbCount
-        );
+        if ($this->config->isNonEuCountry($c)) {
+            // Expedited safety notifications to EC/IRB
+            $costs->addActiveService(
+                'expedited_safety_ec',
+                $craRate * $derived->expeditedSafetySubmissions * $derived->countires * $derived->sites
+            );
 
-        // Periodic safety notifications to EC/IRB
-        $costs->addActiveService(
-            'periodic_safety_ec',
-            $craRate * $derived->periodicSafetyNotifications * $derived->ecIrbCount
-        );
+            // Periodic safety notifications to EC/IRB
+            $costs->addActiveService(
+                'periodic_safety_ec',
+                $craRate * $derived->periodicSafetyNotifications * $derived->countires * $derived->sites
+            );
+        }
 
         // Expedited safety notifications to RA (non-US)
         if (!$this->config->isUs($c)) {
@@ -301,8 +322,8 @@ final class ActivePhaseCostCalculator
         );
 
         // Monitor visit fees
-        $totalActiveVisits = $derived->monitoringVisitsOnsite 
-            + $derived->unblindedVisits 
+        $totalActiveVisits = $derived->monitoringVisitsOnsite
+            + $derived->unblindedVisits
             + $derived->closeoutVisitsOnsite;
         $costs->addActivePassthrough(
             'monitor_visit_fee',

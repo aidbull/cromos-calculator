@@ -40,6 +40,7 @@ final class DerivedInputs
         
         // Site management
         public readonly int $siteMonthsActive,
+        public readonly int $sitePayments,
         
         // Safety counts
         public readonly int $saes,
@@ -47,7 +48,7 @@ final class DerivedInputs
         public readonly int $periodicSafetyNotifications,
         
         // Regulatory
-        public readonly int $ecIrbCount,
+        public readonly int $countires,
         public readonly int $annualSubmissionCycles,
         
         // Team

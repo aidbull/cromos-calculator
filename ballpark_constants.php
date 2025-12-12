@@ -54,6 +54,10 @@ return [
         
         // US-only fees
         'central_irb_fee' => 750,
+
+        // other
+        'internal_communication' => 404,
+        'passthrough_management' => 308
     ],
 
     // ============================================================
@@ -75,8 +79,13 @@ return [
     'hourly_rates' => [
         // CRA (Clinical Research Associate) - most common
         'cra' => [
-            'US' => 190, 'EU_CEE' => 119, 'EU_West' => 190,
-            'Non_EU' => 99, 'Georgia' => 99, 'Turkiye' => 99, 'Ukraine' => 65,
+            'US' => 190,
+            'EU_CEE' => 119,
+            'EU_West' => 190,
+            'Non_EU' => 99,
+            'Georgia' => 99,
+            'Turkiye' => 99,
+            'Ukraine' => 65,
         ],
         // PM (Project Manager)
         'pm' => [
@@ -85,13 +94,22 @@ return [
         ],
         // Admin/Support
         'admin' => [
-            'US' => 124, 'EU_CEE' => 77, 'EU_West' => 124,
-            'Non_EU' => 64, 'Georgia' => 64, 'Turkiye' => 64, 'Ukraine' => 42,
+            'US' => 124,
+            'EU_CEE' => 77,
+            'EU_West' => 124,
+            'Non_EU' => 64,
+            'Georgia' => 64,
+            'Turkiye' => 64,
+            'Ukraine' => 42,
         ],
         // Regulatory Affairs
         'ra' => [
-            'US' => 285, 'EU_CEE' => 179, 'EU_West' => 285,
-            'Non_EU' => 148, 'Georgia' => 149, 'Turkiye' => 149, 'Ukraine' => 98,
+            'US' => 285,
+            'EU_CEE' => 179,
+            'EU_West' => 285,
+            'Non_EU' => 149, # eu * 83% discount
+            'Georgia' => 149,
+            'Turkiye' => 149, 'Ukraine' => 98,
         ],
         // QA
         'qa' => [
@@ -100,8 +118,13 @@ return [
         ],
         // Contract specialist
         'contract' => [
-            'US' => 238, 'EU_CEE' => 149, 'EU_West' => 238,
-            'Non_EU' => 124, 'Georgia' => 124, 'Turkiye' => 124, 'Ukraine' => 81,
+            'US' => 238,
+            'EU_CEE' => 149,
+            'EU_West' => 238,
+            'Non_EU' => 124, // 124 ?
+            'Georgia' => 124,
+            'Turkiye' => 124,
+            'Ukraine' => 81,
         ],
         // Investigator meeting rate (Row 78)
         'investigator_meeting' => [
@@ -264,7 +287,7 @@ return [
             'pharmacy_annual' => 0,
             'site_closeout_fee' => 0,
             'pharmacy_closeout_fee' => 0,
-            'various_ongoing' => 150,
+            'various_ongoing' => 75,
         ],
         'Georgia' => [
             'travel_sqv' => 130,
@@ -325,14 +348,18 @@ return [
     'monthly_costs' => [
         // TMF Maintenance (Row 92)
         'tmf_maintenance' => [
-            'US' => 449, 'EU_CEE' => 308, 'EU_West' => 449,
-            'Non_EU' => 256, // 308*0.83
-            'Georgia' => 269, 'Turkiye' => 269, 'Ukraine' => 203,
+            'US' => 449,
+            'EU_CEE' => 308,
+            'EU_West' => 449,
+            'Non_EU' => 255.64, // 308*0.83
+            'Georgia' => 269,
+            'Turkiye' => 269,
+            'Ukraine' => 203,
         ],
         // CTMS Update (Row 96)
         'ctms_update' => [
             'US' => 942, 'EU_CEE' => 588, 'EU_West' => 942,
-            'Non_EU' => 488, // 588*0.83
+            'Non_EU' => 488.04, // 588*0.83
             'Georgia' => 489, 'Turkiye' => 489, 'Ukraine' => 321,
         ],
     ],

@@ -99,7 +99,7 @@ final class StartupCostCalculator
         // Study-specific contract & budget templates (per country)
         $costs->addStartupService(
             'contract_templates',
-            $this->config->contractTemplateCost($c) * $derived->ecIrbCount
+            $this->config->contractTemplateCost($c) * $derived->countires
         );
 
         // Site-specific contracts & budgets negotiation (per site)
@@ -116,7 +116,7 @@ final class StartupCostCalculator
         // Country-specific dossier
         $costs->addStartupService(
             'country_dossier',
-            $this->config->regulatoryHours('country_dossier') * $this->config->hourlyRate('ra', $c) * $derived->ecIrbCount
+            $this->config->regulatoryHours('country_dossier') * $this->config->hourlyRate('ra', $c) * $derived->countires
         );
 
         // Initial EC/IRB submissions (per site)
@@ -138,7 +138,7 @@ final class StartupCostCalculator
         // Investigator start-up meeting (4 hrs * investigator_meeting_rate * CRAs)
         $costs->addStartupService(
             'investigator_meeting',
-            4 * $this->config->hourlyRate('investigator_meeting', $c) * $derived->crasRequired * $derived->ecIrbCount
+            4 * $this->config->hourlyRate('investigator_meeting', $c) * $derived->crasRequired * $derived->countires
         );
     }
 
@@ -154,13 +154,13 @@ final class StartupCostCalculator
         // Project team setup (2 hrs * PM rate * CRAs)
         $costs->addStartupService(
             'team_setup',
-            2 * $pmRate * $derived->crasRequired * $derived->ecIrbCount
+            2 * $pmRate * $derived->crasRequired * $derived->countires
         );
 
         // Project team training (22 hrs * CRA rate * CRAs)
         $costs->addStartupService(
             'team_training',
-            22 * $craRate * $derived->crasRequired * $derived->ecIrbCount
+            22 * $craRate * $derived->crasRequired * $derived->countires
         );
     }
 
@@ -192,7 +192,7 @@ final class StartupCostCalculator
         // Project team management (2 hrs * PM rate * countries)
         $costs->addStartupService(
             'team_management',
-            2 * $pmRate * $derived->ecIrbCount * $derived->startupMonths
+            2 * $pmRate * $derived->countires * $derived->startupMonths
         );
 
         // Review of visit reports (PM rate * total qualification visits)
@@ -204,7 +204,7 @@ final class StartupCostCalculator
         // Resolution of country-level issues (4 hrs * PM rate * countries * startup months)
         $costs->addStartupService(
             'country_issues_resolution',
-            4 * $pmRate * $derived->ecIrbCount * $derived->startupMonths
+            4 * $pmRate * $derived->countires * $derived->startupMonths
         );
 
         // Sites setup (14 hrs * CRA rate * sites)
@@ -262,13 +262,13 @@ final class StartupCostCalculator
         // Translation costs (per country)
         $costs->addStartupPassthrough(
             'translation',
-            $this->config->fixedCost('translation_cost', $c) * $derived->ecIrbCount
+            $this->config->fixedCost('translation_cost', $c) * $derived->countires
         );
 
         // Copying & printing (per country)
         $costs->addStartupPassthrough(
             'copying_printing',
-            $this->config->fixedCost('copying_printing', $c) * $derived->ecIrbCount
+            $this->config->fixedCost('copying_printing', $c) * $derived->countires
         );
 
         // Communication expenses (per site)

@@ -145,7 +145,8 @@ final class BallparkCalculator
         // Vendors & team setup
         $costs->addStartupService('vendors_setup', 3 * $this->config->global('vendors_setup'));
         $costs->addStartupService('team_setup', $this->config->global('team_setup') );
-        $costs->addStartupService('team_training', 20 * 202 * $pmCount * $derived->ecIrbCount);
+        $costs->addStartupService('team_training', 20 * 202 * $pmCount * $derived->countires);
+        $costs->addStartupService('internal_communication', $this->config->global('internal_communication') * $maxStartupMonths);
 
         // Global TMF & tracking (startup)
         $costs->addStartupService('tmf_maintenance', $this->config->global('tmf_maintenance_global') * $maxStartupMonths);
@@ -161,7 +162,12 @@ final class BallparkCalculator
             $costs->addStartupService('tmf_audit_unblinded_initial', $this->config->global('tmf_audit_unblinded_initial'));
         }
 
+        $costs->addStartupService('passthrough_management', $this->config->global('passthrough_management') * $maxStartupMonths);
+
         // ---- ACTIVE PHASE GLOBAL COSTS ----
+
+        // EU Legal Representative Services
+        $costs->addActiveService('eu_legal_rep', $this->config->global('eu_legal_rep_annual') * $derived->activePhaseMonths);
 
         // EU Part I major submissions (CTIS)
         if ($project->hasEuCountries()) {
@@ -175,7 +181,7 @@ final class BallparkCalculator
         $activeWeeks = (int) round($maxActiveMonths * 30.4 / 7);
         $costs->addActiveService(
             'client_calls',
-            (0.5 + 1 + 0.5) * (202 + 77) * $activeWeeks + 202 * ($pmCount - 1) * $activeWeeks
+            ((0.5 + 1 + 0.5) * (202 + 77) + 202 * ($pmCount - 1)) * $maxActiveMonths
         );
 
         // Annual plan updates (33% of initial)
@@ -200,6 +206,7 @@ final class BallparkCalculator
         $costs->addActiveService('vendor_management', 808 * $vendors * $maxActiveMonths);
         $costs->addActiveService('tracking_reporting', $this->config->global('tracking_reporting') * $maxActiveMonths);
         $costs->addActiveService('budget_invoicing', $this->config->global('budget_invoicing') * $maxActiveMonths);
+        $costs->addActiveService('internal_communication', $this->config->global('internal_communication') * $maxActiveMonths);
 
         // QA - active (annual)
         $costs->addActiveService('tmf_audit_annual', $this->config->global('tmf_audit_annual') * $annualCycles);
@@ -207,6 +214,8 @@ final class BallparkCalculator
         if ($project->hasUnblindedVisits()) {
             $costs->addActiveService('tmf_audit_unblinded_annual', $this->config->global('tmf_audit_unblinded_annual') * $annualCycles);
         }
+
+        $costs->addActiveService('passthrough_management', $this->config->global('passthrough_management') * $maxActiveMonths);
 
         return $costs;
     }

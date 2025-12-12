@@ -55,6 +55,7 @@ final class DerivedInputsCalculator
             
             // Site management
             siteMonthsActive: $activePhaseMonths * $country->sites,
+            sitePayments: (int) round($activePhaseMonths / 3 * $country->sites),
             
             // Safety
             saes: (int) round($project->saeRate * $country->patients),
@@ -62,9 +63,9 @@ final class DerivedInputsCalculator
             periodicSafetyNotifications: (int) round($activePhaseMonths / 12),
             
             // Regulatory
-            ecIrbCount: $country->getEcIrbCount(),
+            countires: $country->getCounties(),
             annualSubmissionCycles: (int) round($activePhaseMonths / 12),
-            
+
             // Team
             crasRequired: $this->calcCrasRequired($project, $country),
         );
@@ -158,10 +159,11 @@ final class DerivedInputsCalculator
             closeoutVisitsOnsite: 0,
             closeoutVisitsRemote: 0,
             siteMonthsActive: 0,
+            sitePayments: 0,
             saes: 0,
             expeditedSafetySubmissions: 0,
             periodicSafetyNotifications: 0,
-            ecIrbCount: 0,
+            countires: 0,
             annualSubmissionCycles: 0,
             crasRequired: 0,
         );

@@ -20,7 +20,7 @@ final class CountryInput
      * Get the number of EC/IRBs (countries) in this region.
      * Defaults based on Excel logic if not explicitly set.
      */
-    public function getEcIrbCount(): int
+    public function getCounties(): int
     {
         if ($this->countriesInRegion !== null) {
             return $this->countriesInRegion;
