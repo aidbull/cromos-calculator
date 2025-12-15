@@ -107,7 +107,7 @@ return [
             'US' => 285,
             'EU_CEE' => 179,
             'EU_West' => 285,
-            'Non_EU' => 149, # eu * 83% discount
+            'Non_EU' => 148, # eu * 83% discount
             'Georgia' => 149,
             'Turkiye' => 149, 'Ukraine' => 98,
         ],
@@ -253,7 +253,7 @@ return [
             'pharmacy_annual' => 0,
             'site_closeout_fee' => 0,
             'pharmacy_closeout_fee' => 0,
-            'various_ongoing' => 150,
+            'various_ongoing' => 100,
         ],
         'EU_West' => [
             'travel_sqv' => 500,
