@@ -43,40 +43,34 @@ final class ActivePhaseCostCalculator
         $raRate = $this->config->hourlyRate('ra', $c);
         $annualCycles = $derived->annualSubmissionCycles;
 
-        // Major RA submissions (country-specific)
         if (!$this->config->isUs($c)) {
+            // Major RA submissions (country-specific)
             $costs->addActiveService(
                 'major_ra_submissions',
-                $this->config->majorRaSubmissionCost($c)
+                $this->config->majorRaSubmissionCost($c) * $derived->countires
             );
-        }
 
-        // Minor RA submissions (per annual cycle)
-        $minorRaHours = $this->config->regulatoryHours('minor_ra_submission');
-        $costs->addActiveService(
-            'minor_ra_submissions',
-            $minorRaHours * $raRate * (3 + $annualCycles)
-        );
+            // Minor RA submissions (per annual cycle)
+            $minorRaHours = $this->config->regulatoryHours('minor_ra_submission');
+            if ($c == 'EU_CEE') {
+                $costs->addActiveService(
+                    'minor_ra_submissions',
+                    $minorRaHours * $raRate * 5
+                );
+            } else {
+                $costs->addActiveService(
+                    'minor_ra_submissions',
+                    $minorRaHours * $raRate * (3 + $annualCycles)
+                );
+            }
+        }
 
         // Major EC/IRB submissions (per annual cycle)
         $majorEcHours = $this->config->regulatoryHours('major_ec_submission');
-
-        if ($this->config->isEuCountry($c)) {
+        if ($this->config->isNonEuCountry($c)) {
             $costs->addActiveService(
                 'major_ec_submissions',
-                $majorEcHours * $raRate * $annualCycles * $derived->countires
-            );
-
-            // Minor EC/IRB submissions
-            $minorEcHours = $this->config->regulatoryHours('minor_ec_submission');
-            $costs->addActiveService(
-                'minor_ec_submissions',
-                $minorEcHours * $raRate * (5 + $annualCycles) // Base 5 + 5 per year
-            );
-        } else {
-            $costs->addActiveService(
-                'major_ec_submissions',
-                $majorEcHours * $raRate * $annualCycles * $derived->countires * $derived->sites
+                $majorEcHours * $raRate * $annualCycles * $derived->sites
             );
 
             // Minor EC/IRB submissions
@@ -85,15 +79,29 @@ final class ActivePhaseCostCalculator
                 'minor_ec_submissions',
                 $minorEcHours * $raRate * (3 + $annualCycles * $derived->sites)
             );
+        } else if ($this->config->isUs($c)) {
+            $costs->addActiveService(
+                'major_ec_submissions',
+                $majorEcHours * $raRate * $annualCycles
+            );
+
+            // Minor EC/IRB submissions
+            $minorEcHours = $this->config->regulatoryHours('minor_ec_submission');
+            $costs->addActiveService(
+                'minor_ec_submissions',
+                $minorEcHours * $raRate * ((5 + $annualCycles))
+            );
         }
 
-        // EU Legal representative services (annual)
+        // EU Legal representative services (annual) B
+        /**  BEING CALCULATED IN 'GLOBAL'
         if ($this->config->isEuCountry($c)) {
             $costs->addActiveService(
                 'eu_legal_rep',
                 $this->config->global('eu_legal_rep_annual') * $derived->activePhaseMonths
             );
         }
+         **/
     }
 
     private function calcMeetingCosts(DerivedInputs $derived, CostBreakdown $costs): void
@@ -258,32 +266,51 @@ final class ActivePhaseCostCalculator
         );
 
         if ($this->config->isNonEuCountry($c)) {
-            // Expedited safety notifications to EC/IRB
+            // Expedited safety notifications to Ra
+            $costs->addActiveService(
+                'expedited_safety_ra',
+                $raRate * $derived->expeditedSafetySubmissions * $this->config->regulatoryHours('expedited_safety_ra')
+            );
+
+            // Periodic safety notifications to RA
+            $costs->addActiveService(
+                'periodic_safety_ra',
+                $this->config->regulatoryHours('periodic_safety_ra') * $raRate * $derived->periodicSafetyNotifications
+            );
+
+            // Expedited safety notifications to EC
             $costs->addActiveService(
                 'expedited_safety_ec',
-                $craRate * $derived->expeditedSafetySubmissions * $derived->countires * $derived->sites
+                $craRate * $derived->expeditedSafetySubmissions * $derived->sites
             );
 
             // Periodic safety notifications to EC/IRB
             $costs->addActiveService(
                 'periodic_safety_ec',
-                $craRate * $derived->periodicSafetyNotifications * $derived->countires * $derived->sites
+                $craRate * $derived->periodicSafetyNotifications * $derived->sites
             );
-        }
-
-        // Expedited safety notifications to RA (non-US)
-        if (!$this->config->isUs($c)) {
+        } else if ($this->config->isUs($c)) {
+            // For US only 1 IRB
             $costs->addActiveService(
-                'expedited_safety_ra',
-                $this->config->regulatoryHours('expedited_safety_ra') * $raRate * $derived->expeditedSafetySubmissions
+                'expedited_safety_ec',
+                $craRate * $derived->expeditedSafetySubmissions
+            );
+
+            $costs->addActiveService(
+                'periodic_safety_ec',
+                $craRate * $derived->periodicSafetyNotifications
             );
         }
 
-        // Periodic safety notifications to RA
-        $costs->addActiveService(
-            'periodic_safety_ra',
-            $this->config->regulatoryHours('periodic_safety_ra') * $raRate * $derived->periodicSafetyNotifications
-        );
+        // Expedited safety notifications to RA (EU)
+        if ($this->config->isEuCountry($c)) {
+            // Periodic safety notifications to RA
+            $costs->addActiveService(
+                'periodic_safety_ra',
+                $this->config->regulatoryHours('periodic_safety_ra') * $raRate * $derived->periodicSafetyNotifications
+            );
+        }
+
     }
 
     private function calcPassthroughCosts(DerivedInputs $derived, CostBreakdown $costs): void
@@ -303,7 +330,7 @@ final class ActivePhaseCostCalculator
         if ($derived->unblindedVisits > 0) {
             $costs->addActivePassthrough(
                 'travel_unblinded',
-                $this->config->fixedCost('travel_omv', $c) * $derived->unblindedVisits
+                $this->config->fixedCost('travel_cov', $c) * $derived->unblindedVisits
             );
         }
 

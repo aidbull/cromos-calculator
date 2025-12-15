@@ -145,7 +145,7 @@ final class BallparkCalculator
         // Vendors & team setup
         $costs->addStartupService('vendors_setup', 3 * $this->config->global('vendors_setup'));
         $costs->addStartupService('team_setup', $this->config->global('team_setup') );
-        $costs->addStartupService('team_training', 20 * 202 * $pmCount * $derived->countires);
+        $costs->addStartupService('team_training', 20 * 202 * $pmCount ); // * $derived->countires
         $costs->addStartupService('internal_communication', $this->config->global('internal_communication') * $maxStartupMonths);
 
         // Global TMF & tracking (startup)
@@ -174,6 +174,13 @@ final class BallparkCalculator
             $costs->addActiveService(
                 'eu_ctis_major',
                 32 * 179 // Fixed rate for EU regulatory
+            );
+            $costs->addStartupService('eu_ctis_minor', 179 * 4 * (1 + $derived->annualSubmissionCycles)); // D127
+
+            // Periodic safety notifications to RA
+            $costs->addActiveService(
+                'periodic_safety_ra',
+                $this->config->regulatoryHours('periodic_safety_ra') * 179 * $derived->periodicSafetyNotifications
             );
         }
 

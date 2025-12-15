@@ -113,12 +113,6 @@ final class StartupCostCalculator
     {
         $c = $derived->country;
 
-        // Country-specific dossier
-        $costs->addStartupService(
-            'country_dossier',
-            $this->config->regulatoryHours('country_dossier') * $this->config->hourlyRate('ra', $c) * $derived->countires
-        );
-
         // Initial EC/IRB submissions (per site)
         $costs->addStartupService(
             'initial_ec_submissions',
@@ -126,8 +120,12 @@ final class StartupCostCalculator
         );
 
         // EU-specific: Legal representation setup
-        if ($this->config->isEuCountry($c) && $project->hasEuCountries()) {
-            // Only add once for EU countries (handled at project level, but track here)
+        if (!$this->config->isUs($c)) {
+            // Country-specific dossier
+            $costs->addStartupService(
+                'country_dossier',
+                $this->config->regulatoryHours('country_dossier') * $this->config->hourlyRate('ra', $c) * $derived->countires
+            );
         }
     }
 
@@ -138,7 +136,7 @@ final class StartupCostCalculator
         // Investigator start-up meeting (4 hrs * investigator_meeting_rate * CRAs)
         $costs->addStartupService(
             'investigator_meeting',
-            4 * $this->config->hourlyRate('investigator_meeting', $c) * $derived->crasRequired * $derived->countires
+            4 * $this->config->hourlyRate('investigator_meeting', $c) * $derived->crasRequired
         );
     }
 
@@ -154,13 +152,13 @@ final class StartupCostCalculator
         // Project team setup (2 hrs * PM rate * CRAs)
         $costs->addStartupService(
             'team_setup',
-            2 * $pmRate * $derived->crasRequired * $derived->countires
+            2 * $pmRate * $derived->crasRequired
         );
 
         // Project team training (22 hrs * CRA rate * CRAs)
         $costs->addStartupService(
             'team_training',
-            22 * $craRate * $derived->crasRequired * $derived->countires
+            22 * $craRate * $derived->crasRequired
         );
     }
 
@@ -174,7 +172,7 @@ final class StartupCostCalculator
         // TMF Maintenance (startup months)
         $costs->addStartupService(
             'tmf_maintenance',
-            $this->config->monthlyCost('tmf_maintenance', $c) * $derived->startupMonths
+            round($this->config->monthlyCost('tmf_maintenance', $c) * $derived->startupMonths, 2)
         );
 
         // CTMS Update (startup months)

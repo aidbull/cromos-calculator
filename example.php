@@ -30,23 +30,23 @@ $project = new ProjectInput(
     treatmentMonths: 4,
     followupMonths: 12,
     qualificationVisitType: VisitType::ON_SITE,
-    initiationVisitType: VisitType::REMOTE,
-    closeoutVisitType: VisitType::REMOTE,
+    initiationVisitType: VisitType::ON_SITE,
+    closeoutVisitType: VisitType::ON_SITE,
     saeRate: 0.15,
     susarsWeeks: 13,
     vendors: 1,
 );
 
 // Add US data (from Excel column E)
-//$project->addCountry(new CountryInput(
-//    country: 'US',
-//    sites: 5,
-//    patients: 15,
-//    monitoringVisitsOnsite: 4,
-//    monitoringVisitsRemote: 12,
-//    unblindedVisits: 2,
-//    // US: always 1 country (default)
-//));
+$project->addCountry(new CountryInput(
+    country: 'US',
+    sites: 5,
+    patients: 50,
+    monitoringVisitsOnsite: 5,
+    monitoringVisitsRemote: 7,
+    unblindedVisits: 2,
+    // US: always 1 country (default)
+));
 
 $project->addCountry(new CountryInput(
     country: 'Non_EU',
@@ -55,19 +55,28 @@ $project->addCountry(new CountryInput(
     monitoringVisitsOnsite: 10,
     monitoringVisitsRemote: 0,
     unblindedVisits: 5,
-    countriesInRegion:1
+    countriesInRegion:3
 ));
 
-// Example: Non-EU region where each site = separate country/EC
-// $project->addCountry(new CountryInput(
-//     country: 'Non_EU',
-//     sites: 4,
-//     patients: 20,
-//     monitoringVisitsOnsite: 4,
-//     monitoringVisitsRemote: 12,
-//     unblindedVisits: 0,
-//     // countriesInRegion defaults to sites count for Non_EU
-// ));
+ $project->addCountry(new CountryInput(
+     country: 'EU_CEE',
+     sites:5,
+     patients: 21,
+     monitoringVisitsOnsite: 10,
+     monitoringVisitsRemote: 0,
+     unblindedVisits: 3,
+     countriesInRegion: 3
+ ));
+
+ $project->addCountry(new CountryInput(
+     country: 'EU_West',
+     sites:5,
+     patients: 15,
+     monitoringVisitsOnsite: 10,
+     monitoringVisitsRemote: 0,
+     unblindedVisits: 4,
+     countriesInRegion: 2
+ ));
 
 // Calculate
 $results = $calculator->calculateAsArray($project);

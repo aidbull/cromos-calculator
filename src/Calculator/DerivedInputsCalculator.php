@@ -24,7 +24,8 @@ final class DerivedInputsCalculator
 
         $startupMonths = $this->config->startupMonths($country->country);
         $activePhaseMonths = $project->getActivePhaseDuration();
-        
+        $sitePayments = $this->config->isUs($country->country) ? ($activePhaseMonths * $country->sites) : $activePhaseMonths / 3 * $country->sites;
+
         return new DerivedInputs(
             country: $country->country,
             
@@ -55,7 +56,7 @@ final class DerivedInputsCalculator
             
             // Site management
             siteMonthsActive: $activePhaseMonths * $country->sites,
-            sitePayments: (int) round($activePhaseMonths / 3 * $country->sites),
+            sitePayments: (int) round($sitePayments),
             
             // Safety
             saes: (int) round($project->saeRate * $country->patients),
@@ -134,7 +135,7 @@ final class DerivedInputsCalculator
         
         // Base: 1 CRA, +1 if unblinded visits exist
         $base = $project->hasUnblindedVisits() ? 2 : 1;
-        return $base;
+        return $base * $country->getCounties();
     }
 
     private function createEmpty(string $country): DerivedInputs
