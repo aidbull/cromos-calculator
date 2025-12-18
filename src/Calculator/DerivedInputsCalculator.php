@@ -39,8 +39,10 @@ class DerivedInputsCalculator
         
         if ($this->config->isUs($country->country)) {
             $sitePayments = $activePhaseMonths * $country->sites;
+            $monitoringVisitsRemote = $country->monitoringVisitsRemote * $country->sites;
         } else {
             $sitePayments = $activePhaseMonths / 3 * $country->sites;
+            $monitoringVisitsRemote = 0;
         }
 
         return new DerivedInputs(
@@ -58,7 +60,7 @@ class DerivedInputsCalculator
             $this->calcInitiationOnsite($project, $country),
             $this->calcInitiationRemote($project, $country),
             $country->monitoringVisitsOnsite * $country->sites,
-            $country->monitoringVisitsRemote * $country->sites,
+            $monitoringVisitsRemote,
             $country->unblindedVisits * $country->sites,
             $this->calcCloseoutOnsite($project, $country),
             $this->calcCloseoutRemote($project, $country),

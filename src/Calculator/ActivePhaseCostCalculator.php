@@ -97,7 +97,13 @@ class ActivePhaseCostCalculator
 
     private function calcMeetingCosts(DerivedInputs $derived, CostBreakdown $costs)
     {
-        // Handled at project level
+        $c = $derived->country;
+        $pmRate = $this->config->hourlyRate('pm', $c);
+        $qaRate = $this->config->hourlyRate('qa', $c);
+
+        // Regular client calls (already in global, country gets proportional share)
+        // Formula: (0.5+1+0.5) * (PM + QA) * weeks
+        $weeksInPhase = (int)round($derived->activePhaseMonths * 30.4 / 7);
     }
 
     private function calcProjectPlanUpdateCosts(DerivedInputs $derived, CostBreakdown $costs)
@@ -141,11 +147,18 @@ class ActivePhaseCostCalculator
             2 * $pmRate * $derived->countires * $months
         );
 
-        $totalVisits = $derived->monitoringVisitsOnsite
-            + $derived->monitoringVisitsRemote
-            + $derived->unblindedVisits
-            + $derived->closeoutVisitsOnsite
-            + $derived->closeoutVisitsRemote;
+        if ($this->config->isUs($c)) {
+            $totalVisits = $derived->monitoringVisitsOnsite
+                + $derived->monitoringVisitsRemote
+                + $derived->unblindedVisits
+                + $derived->closeoutVisitsOnsite
+                + $derived->closeoutVisitsRemote;
+        } else {
+            $totalVisits = $derived->monitoringVisitsOnsite
+                + $derived->unblindedVisits
+                + $derived->closeoutVisitsOnsite;
+        }
+
         $costs->addActiveService(
             'visit_report_review',
             $pmRate * $totalVisits

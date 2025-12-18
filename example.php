@@ -40,41 +40,41 @@ $project = new ProjectInput(
 // Add US data (from Excel column E)
 $project->addCountry(new CountryInput(
     country: 'US',
-    sites: 5,
-    patients: 50,
-    monitoringVisitsOnsite: 5,
+    sites: 3,
+    patients: 10,
+    monitoringVisitsOnsite: 10,
     monitoringVisitsRemote: 7,
-    unblindedVisits: 2,
+    unblindedVisits: 5,
     // US: always 1 country (default)
 ));
 
 $project->addCountry(new CountryInput(
     country: 'Non_EU',
     sites: 5,
-    patients:15,
+    patients:10,
     monitoringVisitsOnsite: 10,
-    monitoringVisitsRemote: 0,
+    monitoringVisitsRemote: 5,
     unblindedVisits: 5,
-    countriesInRegion:3
+    countriesInRegion:2
 ));
 
  $project->addCountry(new CountryInput(
      country: 'EU_CEE',
-     sites:5,
-     patients: 21,
+     sites:4,
+     patients: 10,
      monitoringVisitsOnsite: 10,
-     monitoringVisitsRemote: 0,
-     unblindedVisits: 3,
-     countriesInRegion: 3
+     monitoringVisitsRemote: 5,
+     unblindedVisits: 5,
+     countriesInRegion: 2
  ));
 
  $project->addCountry(new CountryInput(
      country: 'EU_West',
      sites:5,
-     patients: 15,
+     patients: 10,
      monitoringVisitsOnsite: 10,
-     monitoringVisitsRemote: 0,
-     unblindedVisits: 4,
+     monitoringVisitsRemote: 5,
+     unblindedVisits: 5,
      countriesInRegion: 2
  ));
 
