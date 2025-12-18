@@ -10,13 +10,25 @@ use BallparkCalculator\Model\DerivedInputs;
 use BallparkCalculator\Model\ProjectInput;
 use BallparkCalculator\Model\VisitType;
 
-final class DerivedInputsCalculator
+class DerivedInputsCalculator
 {
-    public function __construct(
-        private readonly CountryRates $config,
-    ) {}
+    /** @var CountryRates */
+    private $config;
 
-    public function calculate(ProjectInput $project, CountryInput $country): DerivedInputs
+    /**
+     * @param CountryRates $config
+     */
+    public function __construct(CountryRates $config)
+    {
+        $this->config = $config;
+    }
+
+    /**
+     * @param ProjectInput $project
+     * @param CountryInput $country
+     * @return DerivedInputs
+     */
+    public function calculate(ProjectInput $project, CountryInput $country)
     {
         if (!$country->isActive()) {
             return $this->createEmpty($country->country);
@@ -24,149 +36,155 @@ final class DerivedInputsCalculator
 
         $startupMonths = $this->config->startupMonths($country->country);
         $activePhaseMonths = $project->getActivePhaseDuration();
-        $sitePayments = $this->config->isUs($country->country) ? ($activePhaseMonths * $country->sites) : $activePhaseMonths / 3 * $country->sites;
+        
+        if ($this->config->isUs($country->country)) {
+            $sitePayments = $activePhaseMonths * $country->sites;
+        } else {
+            $sitePayments = $activePhaseMonths / 3 * $country->sites;
+        }
 
         return new DerivedInputs(
-            country: $country->country,
-            
-            // Original counts
-            sites: $country->sites,
-            patients: $country->patients,
-            
-            // Time periods
-            startupMonths: $startupMonths,
-            activePhaseMonths: $activePhaseMonths,
-            totalMonths: (int) ceil($startupMonths) + $activePhaseMonths,
-            
-            // Site selection (multipliers from config)
-            sitesContacted: (int) round($this->config->global('site_multiplier_contacted') * $country->sites),
-            sitesCdas: (int) round($this->config->global('site_multiplier_cdas') * $country->sites),
-            sitesQuestionnaires: (int) round($this->config->global('site_multiplier_questionnaires') * $country->sites),
-            
-            // Visit counts
-            qualificationVisitsOnsite: $this->calcQualificationOnsite($project, $country),
-            qualificationVisitsRemote: $this->calcQualificationRemote($project, $country),
-            initiationVisitsOnsite: $this->calcInitiationOnsite($project, $country),
-            initiationVisitsRemote: $this->calcInitiationRemote($project, $country),
-            monitoringVisitsOnsite: $country->monitoringVisitsOnsite * $country->sites,
-            monitoringVisitsRemote: $country->monitoringVisitsRemote * $country->sites,
-            unblindedVisits: $country->unblindedVisits * $country->sites,
-            closeoutVisitsOnsite: $this->calcCloseoutOnsite($project, $country),
-            closeoutVisitsRemote: $this->calcCloseoutRemote($project, $country),
-            
-            // Site management
-            siteMonthsActive: $activePhaseMonths * $country->sites,
-            sitePayments: (int) round($sitePayments),
-            
-            // Safety
-            saes: (int) round($project->saeRate * $country->patients),
-            expeditedSafetySubmissions: $this->calcExpeditedSafetySubmissions($project, $activePhaseMonths),
-            periodicSafetyNotifications: (int) round($activePhaseMonths / 12),
-            
-            // Regulatory
-            countires: $country->getCounties(),
-            annualSubmissionCycles: (int) round($activePhaseMonths / 12),
-
-            // Team
-            crasRequired: $this->calcCrasRequired($project, $country),
+            $country->country,
+            $country->sites,
+            $country->patients,
+            $startupMonths,
+            $activePhaseMonths,
+            (int)ceil($startupMonths) + $activePhaseMonths,
+            (int)round($this->config->global('site_multiplier_contacted') * $country->sites),
+            (int)round($this->config->global('site_multiplier_cdas') * $country->sites),
+            (int)round($this->config->global('site_multiplier_questionnaires') * $country->sites),
+            $this->calcQualificationOnsite($project, $country),
+            $this->calcQualificationRemote($project, $country),
+            $this->calcInitiationOnsite($project, $country),
+            $this->calcInitiationRemote($project, $country),
+            $country->monitoringVisitsOnsite * $country->sites,
+            $country->monitoringVisitsRemote * $country->sites,
+            $country->unblindedVisits * $country->sites,
+            $this->calcCloseoutOnsite($project, $country),
+            $this->calcCloseoutRemote($project, $country),
+            $activePhaseMonths * $country->sites,
+            (int)round($sitePayments),
+            (int)round($project->saeRate * $country->patients),
+            $this->calcExpeditedSafetySubmissions($project, $activePhaseMonths),
+            (int)round($activePhaseMonths / 12),
+            $country->getCounties(),
+            (int)round($activePhaseMonths / 12),
+            $this->calcCrasRequired($project, $country)
         );
     }
 
-    private function calcQualificationOnsite(ProjectInput $project, CountryInput $country): int
+    /**
+     * @param ProjectInput $project
+     * @param CountryInput $country
+     * @return int
+     */
+    private function calcQualificationOnsite(ProjectInput $project, CountryInput $country)
     {
         if ($project->qualificationVisitType !== VisitType::ON_SITE) {
             return 0;
         }
-        return (int) round($this->config->global('qualification_onsite_pct') * $country->sites);
+        return (int)round($this->config->global('qualification_onsite_pct') * $country->sites);
     }
 
-    private function calcQualificationRemote(ProjectInput $project, CountryInput $country): int
+    /**
+     * @param ProjectInput $project
+     * @param CountryInput $country
+     * @return int
+     */
+    private function calcQualificationRemote(ProjectInput $project, CountryInput $country)
     {
         if ($project->qualificationVisitType !== VisitType::REMOTE) {
             return 0;
         }
-        return (int) round($this->config->global('qualification_remote_pct') * $country->sites);
+        return (int)round($this->config->global('qualification_remote_pct') * $country->sites);
     }
 
-    private function calcInitiationOnsite(ProjectInput $project, CountryInput $country): int
+    /**
+     * @param ProjectInput $project
+     * @param CountryInput $country
+     * @return int
+     */
+    private function calcInitiationOnsite(ProjectInput $project, CountryInput $country)
     {
         if ($project->initiationVisitType !== VisitType::ON_SITE) {
             return 0;
         }
-        return (int) round($this->config->global('initiation_onsite_pct') * $country->sites);
+        return (int)round($this->config->global('initiation_onsite_pct') * $country->sites);
     }
 
-    private function calcInitiationRemote(ProjectInput $project, CountryInput $country): int
+    /**
+     * @param ProjectInput $project
+     * @param CountryInput $country
+     * @return int
+     */
+    private function calcInitiationRemote(ProjectInput $project, CountryInput $country)
     {
         if ($project->initiationVisitType !== VisitType::REMOTE) {
             return 0;
         }
-        return (int) round($this->config->global('initiation_remote_pct') * $country->sites);
+        return (int)round($this->config->global('initiation_remote_pct') * $country->sites);
     }
 
-    private function calcCloseoutOnsite(ProjectInput $project, CountryInput $country): int
+    /**
+     * @param ProjectInput $project
+     * @param CountryInput $country
+     * @return int
+     */
+    private function calcCloseoutOnsite(ProjectInput $project, CountryInput $country)
     {
         if ($project->closeoutVisitType !== VisitType::ON_SITE) {
             return 0;
         }
-        return (int) round($this->config->global('closeout_onsite_pct') * $country->sites);
+        return (int)round($this->config->global('closeout_onsite_pct') * $country->sites);
     }
 
-    private function calcCloseoutRemote(ProjectInput $project, CountryInput $country): int
+    /**
+     * @param ProjectInput $project
+     * @param CountryInput $country
+     * @return int
+     */
+    private function calcCloseoutRemote(ProjectInput $project, CountryInput $country)
     {
         if ($project->closeoutVisitType !== VisitType::REMOTE) {
             return 0;
         }
-        return (int) round($this->config->global('closeout_remote_pct') * $country->sites);
+        return (int)round($this->config->global('closeout_remote_pct') * $country->sites);
     }
 
-    private function calcExpeditedSafetySubmissions(ProjectInput $project, int $activePhaseMonths): int
+    /**
+     * @param ProjectInput $project
+     * @param int $activePhaseMonths
+     * @return int
+     */
+    private function calcExpeditedSafetySubmissions(ProjectInput $project, $activePhaseMonths)
     {
-        // Formula: ROUND(activeMonths * 30.4 / 7 / susarsWeeks, 0)
         $weeksInPhase = $activePhaseMonths * 30.4 / 7;
-        return (int) round($weeksInPhase / $project->susarsWeeks);
+        return (int)round($weeksInPhase / $project->susarsWeeks);
     }
 
-    private function calcCrasRequired(ProjectInput $project, CountryInput $country): int
+    /**
+     * @param ProjectInput $project
+     * @param CountryInput $country
+     * @return int
+     */
+    private function calcCrasRequired(ProjectInput $project, CountryInput $country)
     {
         if (!$country->isActive()) {
             return 0;
         }
-        
-        // Base: 1 CRA, +1 if unblinded visits exist
         $base = $project->hasUnblindedVisits() ? 2 : 1;
         return $base * $country->getCounties();
     }
 
-    private function createEmpty(string $country): DerivedInputs
+    /**
+     * @param string $country
+     * @return DerivedInputs
+     */
+    private function createEmpty($country)
     {
         return new DerivedInputs(
-            country: $country,
-            sites: 0,
-            patients: 0,
-            startupMonths: 0,
-            activePhaseMonths: 0,
-            totalMonths: 0,
-            sitesContacted: 0,
-            sitesCdas: 0,
-            sitesQuestionnaires: 0,
-            qualificationVisitsOnsite: 0,
-            qualificationVisitsRemote: 0,
-            initiationVisitsOnsite: 0,
-            initiationVisitsRemote: 0,
-            monitoringVisitsOnsite: 0,
-            monitoringVisitsRemote: 0,
-            unblindedVisits: 0,
-            closeoutVisitsOnsite: 0,
-            closeoutVisitsRemote: 0,
-            siteMonthsActive: 0,
-            sitePayments: 0,
-            saes: 0,
-            expeditedSafetySubmissions: 0,
-            periodicSafetyNotifications: 0,
-            countires: 0,
-            annualSubmissionCycles: 0,
-            crasRequired: 0,
+            $country,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         );
     }
 }

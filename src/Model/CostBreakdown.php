@@ -6,148 +6,180 @@ namespace BallparkCalculator\Model;
 
 /**
  * Contains all calculated costs for a country.
- * Organized by phase (startup/active) and type (service/pass-through).
  */
-final class CostBreakdown
+class CostBreakdown
 {
-    /** @var array<string, float> */
-    private array $startupService = [];
+    /** @var string */
+    public $country;
     
     /** @var array<string, float> */
-    private array $startupPassthrough = [];
+    private $startupService = array();
     
     /** @var array<string, float> */
-    private array $activeService = [];
+    private $startupPassthrough = array();
     
     /** @var array<string, float> */
-    private array $activePassthrough = [];
+    private $activeService = array();
+    
+    /** @var array<string, float> */
+    private $activePassthrough = array();
 
-    public function __construct(
-        public readonly string $country,
-    ) {}
-
-    // ---- Setters ----
-
-    public function addStartupService(string $item, float $cost): self
+    /**
+     * @param string $country
+     */
+    public function __construct($country)
     {
-        $this->startupService[$item] = $cost;
+        $this->country = $country;
+    }
+
+    /**
+     * @param string $item
+     * @param float $cost
+     * @return $this
+     */
+    public function addStartupService($item, $cost)
+    {
+        $this->startupService[$item] = (float)$cost;
         return $this;
     }
 
-    public function addStartupPassthrough(string $item, float $cost): self
+    /**
+     * @param string $item
+     * @param float $cost
+     * @return $this
+     */
+    public function addStartupPassthrough($item, $cost)
     {
-        $this->startupPassthrough[$item] = $cost;
+        $this->startupPassthrough[$item] = (float)$cost;
         return $this;
     }
 
-    public function addActiveService(string $item, float $cost): self
+    /**
+     * @param string $item
+     * @param float $cost
+     * @return $this
+     */
+    public function addActiveService($item, $cost)
     {
-        $this->activeService[$item] = $cost;
+        $this->activeService[$item] = (float)$cost;
         return $this;
     }
 
-    public function addActivePassthrough(string $item, float $cost): self
+    /**
+     * @param string $item
+     * @param float $cost
+     * @return $this
+     */
+    public function addActivePassthrough($item, $cost)
     {
-        $this->activePassthrough[$item] = $cost;
+        $this->activePassthrough[$item] = (float)$cost;
         return $this;
     }
-
-    // ---- Getters ----
 
     /** @return array<string, float> */
-    public function getStartupService(): array
+    public function getStartupService()
     {
         return $this->startupService;
     }
 
     /** @return array<string, float> */
-    public function getStartupPassthrough(): array
+    public function getStartupPassthrough()
     {
         return $this->startupPassthrough;
     }
 
     /** @return array<string, float> */
-    public function getActiveService(): array
+    public function getActiveService()
     {
         return $this->activeService;
     }
 
     /** @return array<string, float> */
-    public function getActivePassthrough(): array
+    public function getActivePassthrough()
     {
         return $this->activePassthrough;
     }
 
-    // ---- Totals ----
-
-    public function getStartupServiceTotal(): float
+    /** @return float */
+    public function getStartupServiceTotal()
     {
         return array_sum($this->startupService);
     }
 
-    public function getStartupPassthroughTotal(): float
+    /** @return float */
+    public function getStartupPassthroughTotal()
     {
         return array_sum($this->startupPassthrough);
     }
 
-    public function getStartupTotal(): float
+    /** @return float */
+    public function getStartupTotal()
     {
         return $this->getStartupServiceTotal() + $this->getStartupPassthroughTotal();
     }
 
-    public function getActiveServiceTotal(): float
+    /** @return float */
+    public function getActiveServiceTotal()
     {
         return array_sum($this->activeService);
     }
 
-    public function getActivePassthroughTotal(): float
+    /** @return float */
+    public function getActivePassthroughTotal()
     {
         return array_sum($this->activePassthrough);
     }
 
-    public function getActiveTotal(): float
+    /** @return float */
+    public function getActiveTotal()
     {
         return $this->getActiveServiceTotal() + $this->getActivePassthroughTotal();
     }
 
-    public function getServiceTotal(): float
+    /** @return float */
+    public function getServiceTotal()
     {
         return $this->getStartupServiceTotal() + $this->getActiveServiceTotal();
     }
 
-    public function getPassthroughTotal(): float
+    /** @return float */
+    public function getPassthroughTotal()
     {
         return $this->getStartupPassthroughTotal() + $this->getActivePassthroughTotal();
     }
 
-    public function getGrandTotal(): float
+    /** @return float */
+    public function getGrandTotal()
     {
         return $this->getStartupTotal() + $this->getActiveTotal();
     }
 
-    // ---- Rounding for ballpark estimate ----
-
-    public function getRoundedStartupService(): float
+    /** @return float */
+    public function getRoundedStartupService()
     {
         return round($this->getStartupServiceTotal(), -3);
     }
 
-    public function getRoundedStartupPassthrough(): float
+    /** @return float */
+    public function getRoundedStartupPassthrough()
     {
         return round($this->getStartupPassthroughTotal(), -3);
     }
 
-    public function getRoundedActiveService(): float
+    /** @return float */
+    public function getRoundedActiveService()
     {
         return round($this->getActiveServiceTotal(), -3);
     }
 
-    public function getRoundedActivePassthrough(): float
+    /** @return float */
+    public function getRoundedActivePassthrough()
     {
         return round($this->getActivePassthroughTotal(), -3);
     }
 
-    public function getRoundedGrandTotal(): float
+    /** @return float */
+    public function getRoundedGrandTotal()
     {
         return $this->getRoundedStartupService()
             + $this->getRoundedStartupPassthrough()
@@ -155,31 +187,30 @@ final class CostBreakdown
             + $this->getRoundedActivePassthrough();
     }
 
-    // ---- Export ----
-
-    public function toArray(): array
+    /** @return array */
+    public function toArray()
     {
-        return [
+        return array(
             'country' => $this->country,
-            'startup' => [
+            'startup' => array(
                 'service' => $this->startupService,
                 'service_total' => $this->getRoundedStartupService(),
                 'passthrough' => $this->startupPassthrough,
                 'passthrough_total' => $this->getRoundedStartupPassthrough(),
                 'total' => $this->getRoundedStartupService() + $this->getRoundedStartupPassthrough(),
-            ],
-            'active' => [
+            ),
+            'active' => array(
                 'service' => $this->activeService,
                 'service_total' => $this->getRoundedActiveService(),
                 'passthrough' => $this->activePassthrough,
                 'passthrough_total' => $this->getRoundedActivePassthrough(),
                 'total' => $this->getRoundedActiveService() + $this->getRoundedActivePassthrough(),
-            ],
-            'totals' => [
+            ),
+            'totals' => array(
                 'service' => $this->getRoundedStartupService() + $this->getRoundedActiveService(),
                 'passthrough' => $this->getRoundedStartupPassthrough() + $this->getRoundedActivePassthrough(),
                 'grand_total' => $this->getRoundedGrandTotal(),
-            ],
-        ];
+            ),
+        );
     }
 }

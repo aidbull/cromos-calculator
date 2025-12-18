@@ -4,120 +4,200 @@ declare(strict_types=1);
 
 namespace BallparkCalculator\Config;
 
-final class CountryRates
+class CountryRates
 {
-    private array $config;
+    /** @var array */
+    private $config;
     
-    public function __construct(string $configPath)
+    /**
+     * @param string $configPath
+     */
+    public function __construct($configPath)
     {
         $this->config = require $configPath;
     }
 
-    // ---- Global constants ----
-    
-    public function global(string $key): int|float
+    /**
+     * @param string $key
+     * @return mixed
+     */
+    public function global($key)
     {
-        return $this->config['global'][$key] 
-            ?? throw new \InvalidArgumentException("Unknown global key: {$key}");
+        if (!isset($this->config['global'][$key])) {
+            throw new \InvalidArgumentException("Unknown global key: {$key}");
+        }
+        return $this->config['global'][$key];
     }
 
-    // ---- Country-specific rates ----
-    
-    public function hourlyRate(string $role, string $country): float
+    /**
+     * @param string $role
+     * @param string $country
+     * @return float
+     */
+    public function hourlyRate($role, $country)
     {
-        return (float) ($this->config['hourly_rates'][$role][$country] 
-            ?? throw new \InvalidArgumentException("Unknown rate: {$role}/{$country}"));
+        if (!isset($this->config['hourly_rates'][$role][$country])) {
+            throw new \InvalidArgumentException("Unknown rate: {$role}/{$country}");
+        }
+        return (float)$this->config['hourly_rates'][$role][$country];
     }
 
-    public function visitHours(string $visitType, string $country): int
+    /**
+     * @param string $visitType
+     * @param string $country
+     * @return int
+     */
+    public function visitHours($visitType, $country)
     {
-        return (int) ($this->config['visit_hours'][$country][$visitType] 
-            ?? throw new \InvalidArgumentException("Unknown visit hours: {$visitType}/{$country}"));
+        if (!isset($this->config['visit_hours'][$country][$visitType])) {
+            throw new \InvalidArgumentException("Unknown visit hours: {$visitType}/{$country}");
+        }
+        return (int)$this->config['visit_hours'][$country][$visitType];
     }
 
-    public function fixedCost(string $costType, string $country): float
+    /**
+     * @param string $costType
+     * @param string $country
+     * @return float
+     */
+    public function fixedCost($costType, $country)
     {
-        return (float) ($this->config['fixed_costs'][$country][$costType] ?? 0);
+        return isset($this->config['fixed_costs'][$country][$costType])
+            ? (float)$this->config['fixed_costs'][$country][$costType]
+            : 0.0;
     }
 
-    public function startupMonths(string $country): float
+    /**
+     * @param string $country
+     * @return float
+     */
+    public function startupMonths($country)
     {
-        return (float) ($this->config['startup_months'][$country] 
-            ?? throw new \InvalidArgumentException("Unknown startup months for: {$country}"));
+        if (!isset($this->config['startup_months'][$country])) {
+            throw new \InvalidArgumentException("Unknown startup months for: {$country}");
+        }
+        return (float)$this->config['startup_months'][$country];
     }
 
-    public function monthlyCost(string $costType, string $country): float
+    /**
+     * @param string $costType
+     * @param string $country
+     * @return float
+     */
+    public function monthlyCost($costType, $country)
     {
-        return (float) ($this->config['monthly_costs'][$costType][$country] ?? 0);
+        return isset($this->config['monthly_costs'][$costType][$country])
+            ? (float)$this->config['monthly_costs'][$costType][$country]
+            : 0.0;
     }
 
-    public function regulatoryHours(string $key): int|array
+    /**
+     * @param string $key
+     * @return mixed
+     */
+    public function regulatoryHours($key)
     {
-        return $this->config['regulatory_hours'][$key] 
-            ?? throw new \InvalidArgumentException("Unknown regulatory hours: {$key}");
+        if (!isset($this->config['regulatory_hours'][$key])) {
+            throw new \InvalidArgumentException("Unknown regulatory hours: {$key}");
+        }
+        return $this->config['regulatory_hours'][$key];
     }
 
-    // ---- Region checks ----
-
-    public function isEuCountry(string $country): bool
+    /**
+     * @param string $country
+     * @return bool
+     */
+    public function isEuCountry($country)
     {
         return in_array($country, $this->config['regions']['eu'], true);
     }
 
-    public function isNonEuCountry(string $country): bool
+    /**
+     * @param string $country
+     * @return bool
+     */
+    public function isNonEuCountry($country)
     {
         return in_array($country, $this->config['regions']['non_eu'], true);
     }
 
-    public function isUs(string $country): bool
+    /**
+     * @param string $country
+     * @return bool
+     */
+    public function isUs($country)
     {
         return $country === 'US';
     }
 
-    public function getNonEuDiscount(): float
+    /**
+     * @return float
+     */
+    public function getNonEuDiscount()
     {
-        return (float) $this->config['non_eu_discount'];
+        return (float)$this->config['non_eu_discount'];
     }
 
-    public function getAllCountries(): array
+    /**
+     * @return array
+     */
+    public function getAllCountries()
     {
         return $this->config['regions']['all'];
     }
 
-    // ---- Calculated helpers ----
-
-    public function visitCost(string $visitType, string $country): float
+    /**
+     * @param string $visitType
+     * @param string $country
+     * @return float
+     */
+    public function visitCost($visitType, $country)
     {
         $hours = $this->visitHours($visitType, $country);
         $rate = $this->hourlyRate('cra', $country);
         return $hours * $rate;
     }
 
-    public function siteManagementMonthlyCost(string $country): float
+    /**
+     * @param string $country
+     * @return float
+     */
+    public function siteManagementMonthlyCost($country)
     {
-        // Formula: 5*cra_rate + 6*admin_rate
-        return (5 * $this->hourlyRate('cra', $country)) 
+        return (5 * $this->hourlyRate('cra', $country))
              + (6 * $this->hourlyRate('admin', $country));
     }
 
-    public function contractTemplateCost(string $country): float
+    /**
+     * @param string $country
+     * @return float
+     */
+    public function contractTemplateCost($country)
     {
         return $this->hourlyRate('contract', $country) * $this->global('contract_template_hours');
     }
 
-    public function contractNegotiationCost(string $country): float
+    /**
+     * @param string $country
+     * @return float
+     */
+    public function contractNegotiationCost($country)
     {
         return $this->hourlyRate('contract', $country) * $this->global('contract_negotiation_hours');
     }
 
-    public function majorRaSubmissionCost(string $country): float
+    /**
+     * @param string $country
+     * @return float
+     */
+    public function majorRaSubmissionCost($country)
     {
         $hours = $this->regulatoryHours('major_ra_submission');
         $raRate = $this->hourlyRate('ra', $country);
         $craRate = $this->hourlyRate('cra', $country);
         
-        return ($hours['ra_hours'] * $raRate) 
-             + ($hours['cra_hours'] * $craRate) 
+        return ($hours['ra_hours'] * $raRate)
+             + ($hours['cra_hours'] * $craRate)
              + ($hours['ra_followup_hours'] * $raRate);
     }
 }

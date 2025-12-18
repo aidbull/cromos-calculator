@@ -11,37 +11,41 @@ use BallparkCalculator\Model\ProjectInput;
 
 /**
  * Main orchestrator for ballpark cost calculations.
- * Coordinates calculation across all countries and phases.
  */
-final class BallparkCalculator
+class BallparkCalculator
 {
-    private DerivedInputsCalculator $derivedCalculator;
-    private StartupCostCalculator $startupCalculator;
-    private ActivePhaseCostCalculator $activeCalculator;
+    /** @var CountryRates */
+    private $config;
+    
+    /** @var DerivedInputsCalculator */
+    private $derivedCalculator;
+    
+    /** @var StartupCostCalculator */
+    private $startupCalculator;
+    
+    /** @var ActivePhaseCostCalculator */
+    private $activeCalculator;
 
-    public function __construct(
-        private readonly CountryRates $config,
-    ) {
+    /**
+     * @param CountryRates $config
+     */
+    public function __construct(CountryRates $config)
+    {
+        $this->config = $config;
         $this->derivedCalculator = new DerivedInputsCalculator($config);
         $this->startupCalculator = new StartupCostCalculator($config);
         $this->activeCalculator = new ActivePhaseCostCalculator($config);
     }
 
     /**
-     * Calculate costs for all countries in the project.
-     * 
-     * @return array{
-     *     countries: array<string, CostBreakdown>,
-     *     global: CostBreakdown,
-     *     totals: array{startup: float, active: float, grand_total: float}
-     * }
+     * @param ProjectInput $project
+     * @return array
      */
-    public function calculate(ProjectInput $project): array
+    public function calculate(ProjectInput $project)
     {
-        $countryBreakdowns = [];
-        $derivedByCountry = [];
+        $countryBreakdowns = array();
+        $derivedByCountry = array();
 
-        // Calculate per-country costs
         foreach ($project->getActiveCountries() as $countryInput) {
             $derived = $this->derivedCalculator->calculate($project, $countryInput);
             $derivedByCountry[$countryInput->country] = $derived;
@@ -54,23 +58,22 @@ final class BallparkCalculator
             $countryBreakdowns[$countryInput->country] = $costs;
         }
 
-        // Calculate global/project-level costs
         $globalCosts = $this->calculateGlobalCosts($project, $derivedByCountry);
-
-        // Aggregate totals
         $totals = $this->aggregateTotals($countryBreakdowns, $globalCosts);
 
-        return [
+        return array(
             'countries' => $countryBreakdowns,
             'global' => $globalCosts,
             'totals' => $totals,
-        ];
+        );
     }
 
     /**
-     * @param array<string, DerivedInputs> $derivedByCountry
+     * @param ProjectInput $project
+     * @param array $derivedByCountry
+     * @return CostBreakdown
      */
-    private function calculateGlobalCosts(ProjectInput $project, array $derivedByCountry): CostBreakdown
+    private function calculateGlobalCosts(ProjectInput $project, array $derivedByCountry)
     {
         $costs = new CostBreakdown('GLOBAL');
 
@@ -78,24 +81,29 @@ final class BallparkCalculator
             return $costs;
         }
 
-        $pmRate = $this->config->hourlyRate('pm', 'US'); // Global PM rate
+        $pmRate = $this->config->hourlyRate('pm', 'US');
         $maxStartupMonths = 0;
         $maxActiveMonths = 0;
 
+        /** @var DerivedInputs $derived */
         foreach ($derivedByCountry as $derived) {
             $maxStartupMonths = max($maxStartupMonths, $derived->startupMonths);
             $maxActiveMonths = max($maxActiveMonths, $derived->activePhaseMonths);
         }
 
+        // Get first derived for some calculations
+        $derived = reset($derivedByCountry);
+        if (!$derived) {
+            return $costs;
+        }
+
         // ---- STARTUP GLOBAL COSTS ----
 
-        // Questionnaire development (one-time)
         $costs->addStartupService(
             'questionnaire_development',
             $this->config->global('questionnaire_development')
         );
 
-        // EU Part I Study Dossier (if EU countries active)
         if ($project->hasEuCountries()) {
             $costs->addStartupService(
                 'eu_part1_dossier',
@@ -108,27 +116,23 @@ final class BallparkCalculator
             );
         }
 
-        // External kick-off meeting
         $pmCount = $this->calculatePmCount($project);
         $costs->addStartupService(
             'external_kickoff',
             3105.5 + 202 * ($pmCount - 1)
         );
 
-        // Investigator start-up meeting (global portion)
         $costs->addStartupService(
             'investigator_meeting_global',
             5714 + 202 * ($pmCount - 1)
         );
 
-        // Regular client calls (startup weeks)
-        $startupWeeks = (int) round($maxStartupMonths * 30.4 / 7);
+        $startupWeeks = (int)round($maxStartupMonths * 30.4 / 7);
         $costs->addStartupService(
             'client_calls',
             (0.5 + 1 + 0.5) * (202 + 77) * $startupWeeks + 202 * ($pmCount - 1) * $startupWeeks
         );
 
-        // Project plans (one-time)
         $vendors = $project->vendors;
         $costs->addStartupService('project_management_plan', (10 + 8 + 3 * $vendors) * 202);
         $costs->addStartupService('tmf_management_plan', 10 * 202);
@@ -142,19 +146,16 @@ final class BallparkCalculator
         $costs->addStartupService('deviation_handling_plan', 8 * 202);
         $costs->addStartupService('quality_management_plan', 10 * 202);
 
-        // Vendors & team setup
         $costs->addStartupService('vendors_setup', 3 * $this->config->global('vendors_setup'));
-        $costs->addStartupService('team_setup', $this->config->global('team_setup') );
-        $costs->addStartupService('team_training', 20 * 202 * $pmCount ); // * $derived->countires
+        $costs->addStartupService('team_setup', $this->config->global('team_setup'));
+        $costs->addStartupService('team_training', 20 * 202 * $pmCount);
         $costs->addStartupService('internal_communication', $this->config->global('internal_communication') * $maxStartupMonths);
 
-        // Global TMF & tracking (startup)
         $costs->addStartupService('tmf_maintenance', $this->config->global('tmf_maintenance_global') * $maxStartupMonths);
         $costs->addStartupService('vendor_management', 808 * $vendors * $maxStartupMonths);
         $costs->addStartupService('tracking_reporting', $this->config->global('tracking_reporting') * $maxStartupMonths);
         $costs->addStartupService('budget_invoicing', $this->config->global('budget_invoicing') * $maxStartupMonths);
 
-        // QA - startup
         $costs->addStartupService('protocol_checklist', $this->config->global('protocol_checklist'));
         $costs->addStartupService('tmf_audit_initial', $this->config->global('tmf_audit_initial'));
         
@@ -166,33 +167,28 @@ final class BallparkCalculator
 
         // ---- ACTIVE PHASE GLOBAL COSTS ----
 
-        // EU Legal Representative Services
         $costs->addActiveService('eu_legal_rep', $this->config->global('eu_legal_rep_annual') * $derived->activePhaseMonths);
 
-        // EU Part I major submissions (CTIS)
         if ($project->hasEuCountries()) {
             $costs->addActiveService(
                 'eu_ctis_major',
-                32 * 179 // Fixed rate for EU regulatory
+                32 * 179
             );
-            $costs->addStartupService('eu_ctis_minor', 179 * 4 * (1 + $derived->annualSubmissionCycles)); // D127
+            $costs->addStartupService('eu_ctis_minor', 179 * 4 * (1 + $derived->annualSubmissionCycles));
 
-            // Periodic safety notifications to RA
             $costs->addActiveService(
                 'periodic_safety_ra',
                 $this->config->regulatoryHours('periodic_safety_ra') * 179 * $derived->periodicSafetyNotifications
             );
         }
 
-        // Regular client calls (active weeks)
-        $activeWeeks = (int) round($maxActiveMonths * 30.4 / 7);
+        $activeWeeks = (int)round($maxActiveMonths * 30.4 / 7);
         $costs->addActiveService(
             'client_calls',
             ((0.5 + 1 + 0.5) * (202 + 77) + 202 * ($pmCount - 1)) * $maxActiveMonths
         );
 
-        // Annual plan updates (33% of initial)
-        $annualCycles = (int) round($maxActiveMonths / 12);
+        $annualCycles = (int)round($maxActiveMonths / 12);
         $costs->addActiveService('project_management_plan_update', 0.33 * (10 + 8 + 3 * $vendors) * 202 * $annualCycles);
         $costs->addActiveService('tmf_management_plan_update', 0.33 * 10 * 202 * $annualCycles);
         $costs->addActiveService('monitoring_plan_update', 0.33 * 14 * 202 * $annualCycles);
@@ -205,17 +201,14 @@ final class BallparkCalculator
         $costs->addActiveService('deviation_handling_plan_update', 0.33 * 8 * 202 * $annualCycles);
         $costs->addActiveService('quality_management_plan_update', 0.33 * 10 * 202 * $annualCycles);
 
-        // Team retraining (30% of initial, annual)
         $costs->addActiveService('team_retraining', 0.30 * 20 * 202 * $pmCount * $annualCycles);
 
-        // Global TMF & tracking (active)
         $costs->addActiveService('tmf_maintenance', $this->config->global('tmf_maintenance_global') * $maxActiveMonths);
         $costs->addActiveService('vendor_management', 808 * $vendors * $maxActiveMonths);
         $costs->addActiveService('tracking_reporting', $this->config->global('tracking_reporting') * $maxActiveMonths);
         $costs->addActiveService('budget_invoicing', $this->config->global('budget_invoicing') * $maxActiveMonths);
         $costs->addActiveService('internal_communication', $this->config->global('internal_communication') * $maxActiveMonths);
 
-        // QA - active (annual)
         $costs->addActiveService('tmf_audit_annual', $this->config->global('tmf_audit_annual') * $annualCycles);
         
         if ($project->hasUnblindedVisits()) {
@@ -227,45 +220,54 @@ final class BallparkCalculator
         return $costs;
     }
 
-    private function calculatePmCount(ProjectInput $project): int
+    /**
+     * @param ProjectInput $project
+     * @return int
+     */
+    private function calculatePmCount(ProjectInput $project)
     {
         $base = $project->hasUnblindedVisits() ? 2 : 1;
         return max($base, 1);
     }
 
     /**
-     * @param array<string, CostBreakdown> $countryBreakdowns
+     * @param array $countryBreakdowns
+     * @param CostBreakdown $globalCosts
+     * @return array
      */
-    private function aggregateTotals(array $countryBreakdowns, CostBreakdown $globalCosts): array
+    private function aggregateTotals(array $countryBreakdowns, CostBreakdown $globalCosts)
     {
         $startupTotal = $globalCosts->getRoundedStartupService() + $globalCosts->getRoundedStartupPassthrough();
         $activeTotal = $globalCosts->getRoundedActiveService() + $globalCosts->getRoundedActivePassthrough();
 
+        /** @var CostBreakdown $breakdown */
         foreach ($countryBreakdowns as $breakdown) {
             $startupTotal += $breakdown->getRoundedStartupService() + $breakdown->getRoundedStartupPassthrough();
             $activeTotal += $breakdown->getRoundedActiveService() + $breakdown->getRoundedActivePassthrough();
         }
 
-        return [
+        return array(
             'startup' => $startupTotal,
             'active' => $activeTotal,
             'grand_total' => $startupTotal + $activeTotal,
-        ];
+        );
     }
 
     /**
-     * Get detailed results as array (for JSON output).
+     * @param ProjectInput $project
+     * @return array
      */
-    public function calculateAsArray(ProjectInput $project): array
+    public function calculateAsArray(ProjectInput $project)
     {
         $result = $this->calculate($project);
 
-        $output = [
-            'countries' => [],
+        $output = array(
+            'countries' => array(),
             'global' => $result['global']->toArray(),
             'totals' => $result['totals'],
-        ];
+        );
 
+        /** @var CostBreakdown $breakdown */
         foreach ($result['countries'] as $country => $breakdown) {
             $output['countries'][$country] = $breakdown->toArray();
         }

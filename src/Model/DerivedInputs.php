@@ -6,71 +6,163 @@ namespace BallparkCalculator\Model;
 
 /**
  * Intermediate calculated values derived from user inputs.
- * These feed into the cost calculations.
  */
-final class DerivedInputs
+class DerivedInputs
 {
-    public function __construct(
-        public readonly string $country,
-        
-        // Original counts
-        public readonly int $sites,
-        public readonly int $patients,
-        
-        // Time periods
-        public readonly float $startupMonths,
-        public readonly int $activePhaseMonths,
-        public readonly int $totalMonths,
-        
-        // Site selection counts
-        public readonly int $sitesContacted,
-        public readonly int $sitesCdas,
-        public readonly int $sitesQuestionnaires,
-        
-        // Visit counts
-        public readonly int $qualificationVisitsOnsite,
-        public readonly int $qualificationVisitsRemote,
-        public readonly int $initiationVisitsOnsite,
-        public readonly int $initiationVisitsRemote,
-        public readonly int $monitoringVisitsOnsite,
-        public readonly int $monitoringVisitsRemote,
-        public readonly int $unblindedVisits,
-        public readonly int $closeoutVisitsOnsite,
-        public readonly int $closeoutVisitsRemote,
-        
-        // Site management
-        public readonly int $siteMonthsActive,
-        public readonly int $sitePayments,
-        
-        // Safety counts
-        public readonly int $saes,
-        public readonly int $expeditedSafetySubmissions,
-        public readonly int $periodicSafetyNotifications,
-        
-        // Regulatory
-        public readonly int $countires,
-        public readonly int $annualSubmissionCycles,
-        
-        // Team
-        public readonly int $crasRequired,
-    ) {}
+    /** @var string */
+    public $country;
+    
+    /** @var int */
+    public $sites;
+    
+    /** @var int */
+    public $patients;
+    
+    /** @var float */
+    public $startupMonths;
+    
+    /** @var int */
+    public $activePhaseMonths;
+    
+    /** @var int */
+    public $totalMonths;
+    
+    /** @var int */
+    public $sitesContacted;
+    
+    /** @var int */
+    public $sitesCdas;
+    
+    /** @var int */
+    public $sitesQuestionnaires;
+    
+    /** @var int */
+    public $qualificationVisitsOnsite;
+    
+    /** @var int */
+    public $qualificationVisitsRemote;
+    
+    /** @var int */
+    public $initiationVisitsOnsite;
+    
+    /** @var int */
+    public $initiationVisitsRemote;
+    
+    /** @var int */
+    public $monitoringVisitsOnsite;
+    
+    /** @var int */
+    public $monitoringVisitsRemote;
+    
+    /** @var int */
+    public $unblindedVisits;
+    
+    /** @var int */
+    public $closeoutVisitsOnsite;
+    
+    /** @var int */
+    public $closeoutVisitsRemote;
+    
+    /** @var int */
+    public $siteMonthsActive;
+    
+    /** @var int */
+    public $sitePayments;
+    
+    /** @var int */
+    public $saes;
+    
+    /** @var int */
+    public $expeditedSafetySubmissions;
+    
+    /** @var int */
+    public $periodicSafetyNotifications;
+    
+    /** @var int */
+    public $countires;
+    
+    /** @var int */
+    public $annualSubmissionCycles;
+    
+    /** @var int */
+    public $crasRequired;
 
-    public function getTotalQualificationVisits(): int
+    public function __construct(
+        $country,
+        $sites,
+        $patients,
+        $startupMonths,
+        $activePhaseMonths,
+        $totalMonths,
+        $sitesContacted,
+        $sitesCdas,
+        $sitesQuestionnaires,
+        $qualificationVisitsOnsite,
+        $qualificationVisitsRemote,
+        $initiationVisitsOnsite,
+        $initiationVisitsRemote,
+        $monitoringVisitsOnsite,
+        $monitoringVisitsRemote,
+        $unblindedVisits,
+        $closeoutVisitsOnsite,
+        $closeoutVisitsRemote,
+        $siteMonthsActive,
+        $sitePayments,
+        $saes,
+        $expeditedSafetySubmissions,
+        $periodicSafetyNotifications,
+        $countires,
+        $annualSubmissionCycles,
+        $crasRequired
+    ) {
+        $this->country = $country;
+        $this->sites = (int)$sites;
+        $this->patients = (int)$patients;
+        $this->startupMonths = (float)$startupMonths;
+        $this->activePhaseMonths = (int)$activePhaseMonths;
+        $this->totalMonths = (int)$totalMonths;
+        $this->sitesContacted = (int)$sitesContacted;
+        $this->sitesCdas = (int)$sitesCdas;
+        $this->sitesQuestionnaires = (int)$sitesQuestionnaires;
+        $this->qualificationVisitsOnsite = (int)$qualificationVisitsOnsite;
+        $this->qualificationVisitsRemote = (int)$qualificationVisitsRemote;
+        $this->initiationVisitsOnsite = (int)$initiationVisitsOnsite;
+        $this->initiationVisitsRemote = (int)$initiationVisitsRemote;
+        $this->monitoringVisitsOnsite = (int)$monitoringVisitsOnsite;
+        $this->monitoringVisitsRemote = (int)$monitoringVisitsRemote;
+        $this->unblindedVisits = (int)$unblindedVisits;
+        $this->closeoutVisitsOnsite = (int)$closeoutVisitsOnsite;
+        $this->closeoutVisitsRemote = (int)$closeoutVisitsRemote;
+        $this->siteMonthsActive = (int)$siteMonthsActive;
+        $this->sitePayments = (int)$sitePayments;
+        $this->saes = (int)$saes;
+        $this->expeditedSafetySubmissions = (int)$expeditedSafetySubmissions;
+        $this->periodicSafetyNotifications = (int)$periodicSafetyNotifications;
+        $this->countires = (int)$countires;
+        $this->annualSubmissionCycles = (int)$annualSubmissionCycles;
+        $this->crasRequired = (int)$crasRequired;
+    }
+
+    /** @return int */
+    public function getTotalQualificationVisits()
     {
         return $this->qualificationVisitsOnsite + $this->qualificationVisitsRemote;
     }
 
-    public function getTotalInitiationVisits(): int
+    /** @return int */
+    public function getTotalInitiationVisits()
     {
         return $this->initiationVisitsOnsite + $this->initiationVisitsRemote;
     }
 
-    public function getTotalCloseoutVisits(): int
+    /** @return int */
+    public function getTotalCloseoutVisits()
     {
         return $this->closeoutVisitsOnsite + $this->closeoutVisitsRemote;
     }
 
-    public function getTotalOnsiteVisits(): int
+    /** @return int */
+    public function getTotalOnsiteVisits()
     {
         return $this->qualificationVisitsOnsite
             + $this->initiationVisitsOnsite
