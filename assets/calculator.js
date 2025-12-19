@@ -1,117 +1,81 @@
 (function() {
     'use strict';
 
-    const REGION_MAP = {0: 'US', 1: 'EU_CEE', 2: 'EU_West', 3: 'Non_EU'};
-    const REGION_ORDER = ['US', 'EU_CEE', 'EU_West', 'Non_EU'];
+    const REGIONS = ['us', 'eu_cee', 'eu_west', 'non_eu'];
+    const REGION_API_MAP = {
+        'us': 'US',
+        'eu_cee': 'EU_CEE', 
+        'eu_west': 'EU_West',
+        'non_eu': 'Non_EU'
+    };
+
+    function getInput(name) {
+        const el = document.querySelector(`[name="${name}"]`);
+        return el ? el.value : null;
+    }
+
+    function getNumeric(name, defaultVal = 0) {
+        const val = getInput(name);
+        if (!val) return defaultVal;
+        return parseFloat(val.replace(',', '.').replace('%', '')) || defaultVal;
+    }
+
+    function getInt(name, defaultVal = 0) {
+        return Math.round(getNumeric(name, defaultVal));
+    }
 
     function collectFormData() {
         const countries = {};
-        
-        // 1. Toggle buttons - which regions are active
+
+        // Collect per-region data
+        REGIONS.forEach(region => {
+            const apiRegion = REGION_API_MAP[region];
+            countries[apiRegion] = {
+                sites: getInt(`sites_${region}`),
+                patients: getInt(`patients_${region}`),
+                countries_in_region: getInt(`countries_${region}`, 1),
+                monitoring_onsite: getInt(`monitoring_onsite_${region}`),
+                monitoring_remote: region === 'us' ? getInt(`monitoring_remote_${region}`) : 0,
+                unblinded_visits: getInt(`unblinded_${region}`)
+            };
+        });
+
+        // Check toggle buttons for active regions
         const toggleBtns = document.querySelectorAll('.calc-form-btn .calc-click-btn');
-        const activeRegions = [];
         toggleBtns.forEach((btn, idx) => {
-            if (btn.querySelector('.calc-click-btn__on.active') && REGION_MAP[idx]) {
-                activeRegions.push(REGION_MAP[idx]);
+            const isActive = btn.querySelector('.calc-click-btn__on.active');
+            const region = REGIONS[idx];
+            if (region && !isActive) {
+                const apiRegion = REGION_API_MAP[region];
+                countries[apiRegion].sites = 0;
+                countries[apiRegion].patients = 0;
             }
         });
 
-        // 2. Countries / Sites / Patients inputs
-        const hiddenForm = document.querySelector('.calc-form-hidden');
-        if (hiddenForm) {
-            hiddenForm.querySelectorAll('.calc-form-input').forEach(row => {
-                const label = row.querySelector('.title-loc');
-                if (!label) return;
-                
-                const labelText = label.textContent.trim().toLowerCase();
-                const inputs = row.querySelectorAll('.calc-form-item input');
-                
-                inputs.forEach((input, colIdx) => {
-                    if (colIdx >= 4) return;
-                    const region = REGION_MAP[colIdx];
-                    if (!region) return;
-                    
-                    if (!countries[region]) {
-                        countries[region] = {
-                            sites: 0, patients: 0, countries_in_region: 1,
-                            monitoring_onsite: 0, monitoring_remote: 0, unblinded_visits: 0
-                        };
-                    }
-                    
-                    const val = parseInt(input.value) || 0;
-                    if (labelText.includes('countries')) countries[region].countries_in_region = val;
-                    else if (labelText.includes('sites')) countries[region].sites = val;
-                    else if (labelText.includes('patients')) countries[region].patients = val;
-                });
-            });
-        }
-
-        // 3. Duration inputs
-        let enrollment = 0, treatment = 0, followup = 0;
-        document.querySelectorAll('.calc-form-wrapper1 > .calc-form .calc-form-input').forEach(row => {
-            const label = row.querySelector('.title-loc');
-            const input = row.querySelector('input');
-            if (!label || !input) return;
-            
-            const labelText = label.textContent.trim().toLowerCase();
-            const val = parseFloat(input.value.replace(',', '.')) || 0;
-            
-            if (labelText.includes('enrollment')) enrollment = val;
-            else if (labelText.includes('treatment')) treatment = val;
-            else if (labelText.includes('follow')) followup = val;
-        });
-
-        // 4. Visits section
-        let monitoringOnsite = 0, monitoringRemote = 0, unblindedVisits = 0;
-        let saeRate = 0.15, susarsWeeks = 13;
-        
-        const visitsSection = document.querySelector('.calc-form-wrapper2');
-        if (visitsSection) {
-            visitsSection.querySelectorAll('.calc-form-input').forEach(row => {
-                const label = row.querySelector('.title-loc');
-                const input = row.querySelector('input');
-                if (!label || !input) return;
-                
-                const labelText = label.textContent.trim().toLowerCase();
-                const rawVal = input.value.replace(',', '.').replace('%', '').trim();
-                
-                if (labelText.includes('monitoring') && labelText.includes('on-site')) {
-                    monitoringOnsite = parseInt(rawVal) || 0;
-                } else if (labelText.includes('monitoring') && labelText.includes('remote')) {
-                    monitoringRemote = parseInt(rawVal) || 0;
-                } else if (labelText.includes('unblinded')) {
-                    unblindedVisits = parseInt(rawVal) || 0;
-                } else if (labelText.includes('sae')) {
-                    saeRate = (parseFloat(rawVal) || 15) / 100;
-                } else if (labelText.includes('susar')) {
-                    const match = rawVal.match(/[\d.]+/);
-                    susarsWeeks = match ? parseInt(match[0]) || 13 : 13;
-                }
-            });
-        }
-
-        // 5. Apply visits to active regions
-        Object.keys(countries).forEach(region => {
-            if (countries[region].sites > 0 && activeRegions.includes(region)) {
-                countries[region].monitoring_onsite = monitoringOnsite;
-                countries[region].monitoring_remote = monitoringRemote;
-                countries[region].unblinded_visits = unblindedVisits;
-            } else if (!activeRegions.includes(region)) {
-                countries[region].sites = 0;
-                countries[region].patients = 0;
-            }
-        });
-
-        // 6. Visit type selects
+        // Visit type selects
         const selects = document.querySelectorAll('.calc-select-style select');
         const qualType = (selects[0]?.value === '1') ? 'on-site' : 'remote';
         const initType = (selects[1]?.value === '1') ? 'on-site' : 'remote';
         const closeType = (selects[2]?.value === '1') ? 'on-site' : 'remote';
 
+        // SAE rate as decimal
+        let saeRate = getNumeric('sae_rate', 15);
+        if (saeRate > 1) saeRate = saeRate / 100;
+
+        // SUSAR weeks - extract number from formatted string
+        let susarsWeeks = 13;
+        const susarVal = getInput('susars_weeks');
+        if (susarVal) {
+            const match = susarVal.match(/[\d.,]+/);
+            if (match) {
+                susarsWeeks = parseFloat(match[0].replace(',', '.')) || 13;
+            }
+        }
+
         return {
-            enrollment_months: Math.round(enrollment),
-            treatment_months: Math.round(treatment),
-            followup_months: Math.round(followup),
+            enrollment_months: getNumeric('enrollment_months'),
+            treatment_months: getNumeric('treatment_months'),
+            followup_months: getNumeric('followup_months'),
             qualification_visit_type: qualType,
             initiation_visit_type: initType,
             closeout_visit_type: closeType,
@@ -134,6 +98,7 @@
         const sections = block2.querySelectorAll('.calc-form-wrapper1');
         const global = results.global || {};
         const countries = results.countries || {};
+        const REGION_ORDER = ['US', 'EU_CEE', 'EU_West', 'Non_EU'];
 
         function getVal(region, phase, type) {
             return countries[region]?.[phase]?.[type + '_total'] || 0;
@@ -200,9 +165,7 @@
 
     async function calculate() {
         const data = collectFormData();
-        if (!data) return false;
-
-        console.log('Ballpark: Request', data);
+        console.log('Ballpark: Request', JSON.stringify(data, null, 2));
 
         try {
             const res = await fetch(ballparkConfig.apiUrl, {
@@ -227,13 +190,64 @@
     }
 
     function updateTotals() {
-        document.querySelectorAll('.calc-form-hidden .calc-form-input').forEach(row => {
-            const inputs = row.querySelectorAll('.calc-form-item input');
-            if (inputs.length < 5) return;
-            let total = 0;
-            for (let i = 0; i < 4; i++) total += parseInt(inputs[i].value) || 0;
-            inputs[4].value = total;
+        // Countries total
+        let total = 0;
+        REGIONS.forEach(r => { total += getInt(`countries_${r}`); });
+        const countriesTotal = document.querySelector('[name="countries_total"]');
+        if (countriesTotal) countriesTotal.value = total;
+
+        // Sites total
+        total = 0;
+        REGIONS.forEach(r => { total += getInt(`sites_${r}`); });
+        const sitesTotal = document.querySelector('[name="sites_total"]');
+        if (sitesTotal) sitesTotal.value = total;
+
+        // Patients total
+        total = 0;
+        REGIONS.forEach(r => { total += getInt(`patients_${r}`); });
+        const patientsTotal = document.querySelector('[name="patients_total"]');
+        if (patientsTotal) patientsTotal.value = total;
+
+        // Monitoring on-site total
+        total = 0;
+        REGIONS.forEach(r => { total += getInt(`monitoring_onsite_${r}`); });
+        const onsiteTotal = document.querySelector('[name="monitoring_onsite_total"]');
+        if (onsiteTotal) onsiteTotal.value = total;
+
+        // Monitoring remote total (US only)
+        const remoteTotal = document.querySelector('[name="monitoring_remote_total"]');
+        if (remoteTotal) remoteTotal.value = getInt('monitoring_remote_us');
+
+        // Unblinded total
+        total = 0;
+        REGIONS.forEach(r => { total += getInt(`unblinded_${r}`); });
+        const unblindedTotal = document.querySelector('[name="unblinded_total"]');
+        if (unblindedTotal) unblindedTotal.value = total;
+    }
+
+    function setupSusarFormatting() {
+        const input = document.querySelector('[name="susars_weeks"]');
+        if (!input) return;
+
+        input.addEventListener('blur', function() {
+            const rawVal = this.value.replace(/[^\d.,]/g, '').replace(',', '.');
+            const num = parseFloat(rawVal);
+            if (!isNaN(num) && num > 0) {
+                this.value = 'every ' + num.toString().replace('.', ',') + ' wk(s)';
+            }
         });
+
+        input.addEventListener('focus', function() {
+            const match = this.value.match(/[\d.,]+/);
+            if (match) this.value = match[0];
+            this.select();
+        });
+
+        // Initial format
+        const val = parseFloat(input.value.replace(',', '.'));
+        if (!isNaN(val) && val > 0) {
+            input.value = 'every ' + val.toString().replace('.', ',') + ' wk(s)';
+        }
     }
 
     // Init
@@ -243,15 +257,12 @@
         const successWrapper = document.querySelector('.calc-success-wrapper');
         const resultsSection = document.querySelector('.block-calc2');
 
-        // Hide results initially
         if (resultsSection) resultsSection.style.display = 'none';
 
-        // CF7 success → show "See the results" button
         document.addEventListener('wpcf7mailsent', function() {
             if (successWrapper) successWrapper.style.display = 'block';
         });
 
-        // "See the results" → calculate and show
         const seeBtn = document.querySelector('.calc-btn-wrp2 .calc-btn');
         if (seeBtn) {
             seeBtn.addEventListener('click', async function(e) {
@@ -263,7 +274,6 @@
             });
         }
 
-        // Toggle buttons
         document.querySelectorAll('.calc-click-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 this.querySelector('.calc-click-btn__on')?.classList.toggle('active');
@@ -271,9 +281,10 @@
             });
         });
 
-        // Auto-update totals
-        const hidden = document.querySelector('.calc-form-hidden');
-        if (hidden) hidden.addEventListener('input', updateTotals);
+        // Listen for input changes
+        document.querySelector('.block-calc1')?.addEventListener('input', updateTotals);
+        
         updateTotals();
+        setupSusarFormatting();
     });
 })();

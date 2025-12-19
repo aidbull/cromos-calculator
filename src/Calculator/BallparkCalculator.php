@@ -174,7 +174,7 @@ class BallparkCalculator
                 'eu_ctis_major',
                 32 * 179
             );
-            $costs->addStartupService('eu_ctis_minor', 179 * 4 * (1 + $derived->annualSubmissionCycles));
+            $costs->addActiveService('eu_ctis_minor', 179 * 4 * (1 + $derived->annualSubmissionCycles));
 
             $costs->addActiveService(
                 'periodic_safety_ra',
