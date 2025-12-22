@@ -138,9 +138,9 @@ class BallparkCalculator
         $costs->addStartupService('tmf_management_plan', 10 * 202);
         $costs->addStartupService('monitoring_plan', 14 * 202);
         
-        if ($project->hasUnblindedVisits()) {
+//        if ($project->hasUnblindedVisits()) {
             $costs->addStartupService('unblinded_monitoring_plan', 7 * 202);
-        }
+//        }
         
         $costs->addStartupService('risk_management_plan', 10 * 202);
         $costs->addStartupService('deviation_handling_plan', 8 * 202);
@@ -159,9 +159,9 @@ class BallparkCalculator
         $costs->addStartupService('protocol_checklist', $this->config->global('protocol_checklist'));
         $costs->addStartupService('tmf_audit_initial', $this->config->global('tmf_audit_initial'));
         
-        if ($project->hasUnblindedVisits()) {
+//        if ($project->hasUnblindedVisits()) {
             $costs->addStartupService('tmf_audit_unblinded_initial', $this->config->global('tmf_audit_unblinded_initial'));
-        }
+//        }
 
         $costs->addStartupService('passthrough_management', $this->config->global('passthrough_management') * $maxStartupMonths);
 
@@ -193,9 +193,9 @@ class BallparkCalculator
         $costs->addActiveService('tmf_management_plan_update', 0.33 * 10 * 202 * $annualCycles);
         $costs->addActiveService('monitoring_plan_update', 0.33 * 14 * 202 * $annualCycles);
         
-        if ($project->hasUnblindedVisits()) {
+//        if ($project->hasUnblindedVisits()) {
             $costs->addActiveService('unblinded_monitoring_plan_update', 0.33 * 7 * 202 * $annualCycles);
-        }
+//        }
         
         $costs->addActiveService('risk_management_plan_update', 0.33 * 10 * 202 * $annualCycles);
         $costs->addActiveService('deviation_handling_plan_update', 0.33 * 8 * 202 * $annualCycles);

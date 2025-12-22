@@ -38,45 +38,45 @@ $project = new ProjectInput(
 );
 
 // Add US data (from Excel column E)
-$project->addCountry(new CountryInput(
-    country: 'US',
-    sites: 3,
-    patients: 10,
-    monitoringVisitsOnsite: 10,
-    monitoringVisitsRemote: 7,
-    unblindedVisits: 5,
-    // US: always 1 country (default)
-));
+//$project->addCountry(new CountryInput(
+//    country: 'US',
+//    sites: 5,
+//    patients: 15,
+//    monitoringVisitsOnsite: 4,
+//    monitoringVisitsRemote: 12,
+//    unblindedVisits: 0,
+//    // US: always 1 country (default)
+//));
 
 $project->addCountry(new CountryInput(
     country: 'Non_EU',
-    sites: 5,
-    patients:10,
+    sites: 15,
+    patients:60,
     monitoringVisitsOnsite: 10,
-    monitoringVisitsRemote: 5,
-    unblindedVisits: 5,
-    countriesInRegion:2
+    monitoringVisitsRemote: 0,
+    unblindedVisits: 0,
+    countriesInRegion:5
 ));
 
- $project->addCountry(new CountryInput(
-     country: 'EU_CEE',
-     sites:4,
-     patients: 10,
-     monitoringVisitsOnsite: 10,
-     monitoringVisitsRemote: 5,
-     unblindedVisits: 5,
-     countriesInRegion: 2
- ));
+// $project->addCountry(new CountryInput(
+//     country: 'EU_CEE',
+//     sites:5,
+//     patients: 15,
+//     monitoringVisitsOnsite: 10,
+//     monitoringVisitsRemote: 0,
+//     unblindedVisits: 0,
+//     countriesInRegion: 1
+// ));
 
- $project->addCountry(new CountryInput(
-     country: 'EU_West',
-     sites:5,
-     patients: 10,
-     monitoringVisitsOnsite: 10,
-     monitoringVisitsRemote: 5,
-     unblindedVisits: 5,
-     countriesInRegion: 2
- ));
+// $project->addCountry(new CountryInput(
+//     country: 'EU_West',
+//     sites:5,
+//     patients: 15,
+//     monitoringVisitsOnsite: 10,
+//     monitoringVisitsRemote: 0,
+//     unblindedVisits: 0,
+//     countriesInRegion: 1
+// ));
 
 // Calculate
 $results = $calculator->calculateAsArray($project);
